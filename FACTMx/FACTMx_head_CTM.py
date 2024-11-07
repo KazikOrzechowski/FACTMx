@@ -5,7 +5,7 @@ import tensorflow_probability as tfp
 
 from typing import Tuple
 
-from FACTMx_head import *
+from . import FACTMx_head
 
 class FACTMx_head_TopicModel(FACTMx_head):
   head_type='CTM'
