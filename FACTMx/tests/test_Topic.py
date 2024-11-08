@@ -41,7 +41,7 @@ def test_Topic(dim_latent, beta=1, n_patients=100, n_obs=1000):
 
   val_data = []
 
-  heads_config = [{'head_type':'Topic', 'dim':4,
+  heads_config = [{'head_type':'TopicModel', 'dim':4,
                    'dim_words':3, 'head_name':'IF'}]
 
   model = FACTMx_model(dim_latent=dim_latent, heads_config=heads_config, beta=beta)
