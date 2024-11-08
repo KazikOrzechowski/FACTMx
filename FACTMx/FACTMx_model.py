@@ -4,8 +4,8 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 from typing import Tuple, Dict
-from . import FACTMx_head
-from . import FACTMx_encoder
+from FACTMx import FACTMx_head
+from FACTMx import FACTMx_encoder
 
 from logging import warning
 import json
