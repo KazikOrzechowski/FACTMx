@@ -11,4 +11,11 @@ setup(
     author_email='',
 
     py_modules=['FACTMx'],
+    install_requires=[
+        'pandas',
+        'numpy',
+        'tensorflow',
+        'tensorflow_probability',
+        'typing'
+    ]
 )
