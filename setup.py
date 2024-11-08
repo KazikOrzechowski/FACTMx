@@ -16,7 +16,6 @@ setup(
         'tensorflow_probability',
         'typing',
         'logging',
-        'json',
         'os'
     ]
 )
