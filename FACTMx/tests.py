@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import tensorflow_probability as tf
+import tensorflow_probability as tfp
 
 
 def test_Normal_2D(sd1, sd2, covar=0., beta=1):
