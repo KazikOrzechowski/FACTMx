@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from FACTMx import __version__
 
@@ -10,7 +10,7 @@ setup(
     author='Kazimierz Oksza-Orzechowski',
     author_email='placeholder@gmail.com',
 
-    py_modules=['FACTMx'],
+    py_modules=find_packages(),
     install_requires=[
         'pandas',
         'numpy',
