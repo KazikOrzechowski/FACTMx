@@ -129,7 +129,7 @@ class FACTMx_model(tf.Module):
       json.dump(config, f)
 
     self.encoder.save_weights(f'{model_path}/encoder')
-    for i, head in enumerate(model.heads):
+    for i, head in enumerate(self.heads):
       head.save_weights(f'{model_path}/head{i}')
 
     if include_optimizer:
