@@ -1,7 +1,6 @@
 from setuptools import setup, find_packages
 
 from FACTMx import __version__
-from FACTMx import FACT
 
 setup(
     name='FACTMx',
