@@ -8,7 +8,7 @@ from typing import Tuple
 from . import FACTMx_head
 
 class FACTMx_head_TopicModel(FACTMx_head):
-  head_type='CTM'
+  head_type='TopicModel'
 
   def __init__(self,
                dim, dim_latent, dim_words,
