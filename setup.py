@@ -16,8 +16,6 @@ setup(
         'numpy',
         'tensorflow',
         'tensorflow_probability',
-        'typing',
-        'json',
-        'os'
+        'typing'
     ]
 )
