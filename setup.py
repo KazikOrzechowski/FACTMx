@@ -8,7 +8,6 @@ setup(
 
     url='https://github.com/KazikOrzechowski/FACTMx',
     author='Kazimierz Oksza-Orzechowski',
-    author_email='',
 
     py_modules=['FACTMx'],
     install_requires=[
