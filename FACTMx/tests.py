@@ -3,6 +3,7 @@ import pandas as pd
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+from FACTMx.custom_keras_layers import ConstantResponse
 
 def test_Normal_2D(sd1, sd2, covar=0., beta=1):
   data_loc = tf.zeros((2,))
