@@ -15,7 +15,6 @@ setup(
         'pandas',
         'numpy',
         'tensorflow',
-        'tensorflow_probability',
-        'typing'
+        'tensorflow_probability'
     ]
 )
