@@ -1,13 +1,14 @@
 from setuptools import setup
 
-#from FACTMx import __version__
+from FACTMx import __version__
 
 setup(
     name='FACTMx',
-    version='dev',
+    version=__version__,
 
     url='https://github.com/KazikOrzechowski/FACTMx',
     author='Kazimierz Oksza-Orzechowski',
+    author_email='placeholder@gmail.com',
 
     py_modules=['FACTMx'],
     install_requires=[
