@@ -1,7 +1,6 @@
 import tensorflow as tf
-import keras
 
-@keras.saving.register_keras_serializable()
+@tf.keras.utils.register_keras_serializable()
 class ConstantResponse(tf.keras.layers.Layer):
   def __init__(self,
                units,
