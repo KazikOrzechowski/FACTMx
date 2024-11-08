@@ -16,9 +16,13 @@ def test_Normal_2D(sd1, sd2, covar=0., beta=1):
 
   heads_config = [{'head_type':'MultiNormal', 'dim':2, 'head_name':'RNA'}]
 
-  model = FACTMx_model(dim_latent=1, heads_config=heads_config, beta=beta)
-
-  return model, dataset, val_data
+  model_config = {
+    'dim_latent': 1,
+    'heads_config': heads_config,
+    'beta': beta
+  }
+  
+  return model_config, dataset, val_data, {}
 
 
 def test_Normal_2D_bias(sd1, sd2, covar=0., beta=1):
@@ -32,9 +36,13 @@ def test_Normal_2D_bias(sd1, sd2, covar=0., beta=1):
 
   heads_config = [{'head_type':'MultiNormal', 'dim':2, 'head_name':'RNA'}]
 
-  model = FACTMx_model(dim_latent=1, heads_config=heads_config, beta=beta)
+  model_config = {
+    'dim_latent': 1, 
+    'heads_config': heads_config,
+    'beta': beta
+  }
 
-  return model, dataset, val_data
+  return model_config, dataset, val_data, {}
 
 
 def test_Normal_3D(sd1, sd2, covar=0., dim_latent=1, beta=1):
@@ -50,9 +58,13 @@ def test_Normal_3D(sd1, sd2, covar=0., dim_latent=1, beta=1):
 
   heads_config = [{'head_type':'MultiNormal', 'dim':3, 'head_name':'RNA'}]
 
-  model = FACTMx_model(dim_latent=dim_latent, heads_config=heads_config, beta=beta)
+  model_config = {
+    'dim_latent': dim_latent, 
+    'heads_config': heads_config, 
+    'beta': beta
+  }
 
-  return model, dataset, val_data
+  return model_config, dataset, val_data, {}
 
 
 def test_Normal_ND_with_noise(sd, n_dim, sd_noise=0.1, noise_dim=10, dim_latent=1, beta=1):
@@ -66,9 +78,13 @@ def test_Normal_ND_with_noise(sd, n_dim, sd_noise=0.1, noise_dim=10, dim_latent=
 
   heads_config = [{'head_type':'MultiNormal', 'dim':n_dim+noise_dim, 'head_name':'RNA'}]
 
-  model = FACTMx_model(dim_latent=dim_latent, heads_config=heads_config, beta=beta)
+  model_config = {
+    'dim_latent': dim_latent, 
+    'heads_config': heads_config, 
+    'beta': beta
+  }
 
-  return model, dataset, val_data
+  return model_config, dataset, val_data, {}
 
 
 def test_N_Bernoullis(n, scale=1, beta=1):
@@ -88,9 +104,13 @@ def test_N_Bernoullis(n, scale=1, beta=1):
 
   heads_config = [{'head_type':'Bernoulli', 'dim':1, 'head_name':'DNA'}] * n
 
-  model = FACTMx_model(dim_latent=1, heads_config=heads_config, beta=beta)
+  model_config = {
+    'dim_latent': 1, 
+    'heads_config': heads_config, 
+    'beta': beta
+  }
 
-  return model, dataset, val_data
+  return model_config, dataset, val_data, {'logits': logits}
 
 
 def test_Bernoulli_Normal(n, beta=1):
@@ -125,9 +145,13 @@ def test_Bernoulli_Normal(n, beta=1):
   heads_config = [{'head_type':'Bernoulli', 'dim':1, 'head_name':'DNA'}] * n
   heads_config.append({'head_type':'MultiNormal', 'dim':3, 'head_name':'RNA'})
 
-  model = FACTMx_model(dim_latent=2, heads_config=heads_config, beta=beta)
+  model_config = {
+    'dim_latent': 2, 
+    'heads_config': heads_config, 
+    'beta': beta
+  }
 
-  return model, dataset, val_data
+  return model_config, dataset, val_data, {'logits': logits}
 
 
 def test_combined(dim_latent, beta=1):
@@ -164,9 +188,13 @@ def test_combined(dim_latent, beta=1):
   heads_config = [{'head_type':'Multinomial', 'dim':1, 'head_name':'DNA'}]
   heads_config.append({'head_type':'MultiNormal', 'dim':3, 'head_name':'RNA'})
 
-  model = FACTMx_model(dim_latent=2, heads_config=heads_config, beta=beta)
+  model_config = {
+    'dim_latent': 2, 
+    'heads_config': heads_config,
+    'beta': beta
+  }
 
-  return model, dataset, val_data, {'logits': logits}
+  return model_config, dataset, val_data, {'logits': logits}
 
 
 def test_Multinomial(dim_latent, beta=1):
@@ -202,9 +230,13 @@ def test_Multinomial(dim_latent, beta=1):
                    'dim':3,
                    'head_name':'rna'}]
 
-  model = FACTMx_model(dim_latent, heads_config=heads_config, beta=beta)
+  model_config = {
+    'dim_latent': dim_latent,
+    'heads_config': heads_config,
+    'beta': beta
+  }
 
-  return model, dataset, val_data
+  return model_config, dataset, val_data, {'logits': padded_logits}
 
 
 def test_Topic(dim_latent, beta=1, n_patients=100, n_obs=1000):
@@ -253,10 +285,14 @@ def test_Topic(dim_latent, beta=1, n_patients=100, n_obs=1000):
   heads_config = [{'head_type':'TopicModel', 'dim':3,
                    'dim_words':3, 'head_name':'IF'}]
 
-  model = FACTMx_model(dim_latent=dim_latent, heads_config=heads_config, beta=beta)
+  model_config = {
+    'dim_latent': dim_latent, 
+    'heads_config': heads_config, 
+    'beta': beta
+  }
 
-  return model, dataset, val_data, {'topic_log_densities':topic_log_densities,
-                                    'assignments':assignments}
+  return model_config, dataset, val_data, {'topic_log_densities':topic_log_densities,
+                                           'assignments':assignments}
 
 
 def test_Normal_noise_regularisation(sd, n_dim,
@@ -318,9 +354,11 @@ def test_Normal_noise_regularisation(sd, n_dim,
                    }]
 
   #create model with specified configuration of encoder and heads
-  model = FACTMx_model(dim_latent=dim_latent,
-                       encoder_config=encoder_config,
-                       heads_config=heads_config,
-                       beta=beta)
+  model_config = {
+    'dim_latent': dim_latent,
+    'encoder_config': encoder_config,
+    'heads_config': heads_config,
+    'beta': beta
+  }
 
-  return model, dataset, val_data
+  return model_config, dataset, val_data, {}
