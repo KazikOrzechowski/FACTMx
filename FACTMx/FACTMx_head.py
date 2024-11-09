@@ -5,6 +5,8 @@ import tensorflow_probability as tfp
 
 from typing import Tuple
 
+from FACTMx.custom_keras_layers import ConstantResponse
+
 class FACTMx_head(tf.Module):
   dim: int
   dim_latent: int
@@ -203,9 +205,9 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     if scale_config == 'linear':
       self.layers['scale'] = tf.keras.Sequential(
                               [tf.keras.Input(shape=(self.dim_latent,)),
-                               tf.keras.layers.Dense(units=self.dim,
-                                                     activation='relu',
-                                                     bias_initializer='zeros')]
+                               ConstantResponse(units=self.dim,
+                                                activation='relu',
+                                                bias_initializer='zeros')]
                              )
     else:
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
