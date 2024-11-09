@@ -4,9 +4,8 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 from typing import Tuple, Dict
-import numpy as np
-import tensorflow_probability as tfp
-from typing import Dict
+
+from FACTMx.custom_keras_layers import ConstantResponse
 
 class FACTMx_encoder(tf.Module):
   head_dims: Tuple[int]
@@ -37,9 +36,9 @@ class FACTMx_encoder(tf.Module):
     if scale_config == 'linear':
       self.layers['scale'] = tf.keras.Sequential(
                               [tf.keras.Input(shape=(sum(head_dims),)),
-                               tf.keras.layers.Dense(units=dim_latent,
-                                                     activation='relu',
-                                                     bias_initializer='zeros')]
+                               ConstantResponse(units=dim_latent,
+                                                activation='relu',
+                                                bias_initializer='zeros')]
       )
     else:
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
