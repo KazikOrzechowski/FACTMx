@@ -4,7 +4,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from typing import Tuple
 
-from FACTMx import FACTMx_head
+from FACTMx.FACTMx_head import FACTMx_head
 
 
 def ragged_mat_mul(ragged_tensor, matrix):
