@@ -14,12 +14,14 @@ class FACTMx_head_TopicModel(FACTMx_head):
                dim, dim_latent, dim_words,
                head_name,
                decode_config='linear',
+               ragged=False,
                topic_profiles=None,
                temperature=1E-4):
     super().__init__(dim, dim_latent, head_name)
     self.eps = 1E-5
     self.dim_words = dim_words
     self.temperature = temperature
+    self.ragged = ragged
 
     if decode_config == 'linear':
       self.decode_model = tf.keras.Sequential(
@@ -126,6 +128,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
         'dim_words':self.dim_words,
         'head_name':self.head_name,
         'head_type':self.head_type,
+        'ragged':self.ragged,
         'temperature':self.temperature,
         'topic_profiles':self.topic_profiles_trainable.numpy().tolist(),
         'decode_config':self.decode_model.get_config()
