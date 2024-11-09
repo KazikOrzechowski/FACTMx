@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import keras
 import tensorflow as tf
 import tensorflow_probability as tfp
 from typing import Tuple
@@ -49,7 +50,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
     #log proportions in topic profiles, with respect to fixed proportion of word0
     if topic_profiles is None:
       topic_profiles = tf.keras.initializers.Orthogonal()(shape=(dim_words-1, dim+1))
-    self.topic_profiles_trainable = tf.keras.Variable(topic_profiles, trainable=True)
+    self.topic_profiles_trainable = keras.Variable(topic_profiles, trainable=True)
 
     self.t_vars = [*self.decode_model.trainable_variables,
                    self.topic_profiles_trainable]
