@@ -2,10 +2,21 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-
 from typing import Tuple
 
 from FACTMx import FACTMx_head
+
+
+def ragged_mat_mul(ragged_tensor, matrix):
+  
+  output_signature = tf.RaggedTensorSpec(shape=[None, None], 
+                                         ragged_rank=0)
+  return tf.map_fn(
+    lambda x: tf.reshape(x, (-1, matrix.shape[0])) @ matrix,
+    ragged_tensor,
+    fn_output_signature=output_signature
+  )
+  
 
 class FACTMx_head_TopicModel(FACTMx_head):
   head_type='TopicModel'
@@ -76,7 +87,9 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
     log_topic_profiles = self.get_log_topic_profiles()
 
-    assignment_logits = tf.math.add(log_topic_proportions, tf.matmul(data, log_topic_profiles))
+    log_likelihoods = tf.matmul(data, log_topic_profiles) if not self.ragged else ragged_mat_mul(data, log_topic_profiles)
+
+    assignment_logits = tf.math.add(log_topic_proportions, log_likelihoods)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
     return assignment_sample, assignment_logits, log_topic_proportions.numpy()
@@ -109,7 +122,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
   def encode(self, data):
     log_topic_profiles = self.get_log_topic_profiles()
 
-    assignment_logits = tf.matmul(data, log_topic_profiles)
+    assignment_logits = tf.matmul(data, log_topic_profiles) if not self.ragged else ragged_mat_mul(data, log_topic_profiles)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
