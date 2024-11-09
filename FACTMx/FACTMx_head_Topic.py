@@ -49,7 +49,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
     #log proportions in topic profiles, with respect to fixed proportion of word0
     if topic_profiles is None:
       topic_profiles = tf.keras.initializers.Orthogonal()(shape=(dim_words-1, dim+1))
-    self.topic_profiles_trainable = tf.compat.v1.keras.Variable(topic_profiles, trainable=True)
+    self.topic_profiles_trainable = tf.Variable(topic_profiles, trainable=True)
 
     self.t_vars = [*self.decode_model.trainable_variables,
                    self.topic_profiles_trainable]
