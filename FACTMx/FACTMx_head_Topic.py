@@ -24,7 +24,7 @@ def ragged_KL_divergence(ragged_logits,
                          second_logits, 
                          distribution_function):
   
-  output_signature = tf.RaggedTensorSpec(shape=[None, None], 
+  output_signature = tf.RaggedTensorSpec(shape=[None, ], 
                                          dtype=tf.float32,
                                          ragged_rank=0)
 
