@@ -83,6 +83,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
   def get_ragged_assignments(self, ragged_logits):
     output_signature = tf.RaggedTensorSpec(shape=[None, None], 
+                                           dtype=tf.double,
                                            ragged_rank=0)
 
     ragged_sampling = lambda x: self.get_assignment_distribution(x).sample()
