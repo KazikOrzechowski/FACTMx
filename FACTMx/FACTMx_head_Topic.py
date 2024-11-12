@@ -11,7 +11,7 @@ def ragged_mat_mul(ragged_tensor, matrix):
   
   output_signature = tf.RaggedTensorSpec(shape=[None, None], 
                                          ragged_rank=0)
-  ragged_mul_function = lambda x: tf.reshape(x, (-1, matrix.shape[0])).astype(tf.float32) @ matrix
+  ragged_mul_function = lambda x: tf.cast(tf.reshape(x, (-1, matrix.shape[0])), tf.float32) @ matrix
   
   return tf.map_fn(
     ragged_mul_function,
