@@ -137,15 +137,13 @@ class FACTMx_head_TopicModel(FACTMx_head):
       kl_divergence = tf.reduce_mean(
           tfp.distributions.OneHotCategorical(logits=q_logits).kl_divergence(
               tfp.distributions.OneHotCategorical(logits=log_topic_props)
-              ),
-          axis=-1
+              )
       )
     else:
       kl_divergence = tf.reduce_mean(
         ragged_KL_divergence(q_logits, 
                              log_topic_props, 
-                             tfp.distributions.OneHotCategorical),
-        axis=-1
+                             tfp.distributions.OneHotCategorical)
       )
 
     log_likelihood = tf.reduce_sum(
