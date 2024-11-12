@@ -18,7 +18,23 @@ def ragged_mat_mul(ragged_tensor, matrix):
     ragged_tensor,
     fn_output_signature=output_signature
   )
+
+
+def ragged_KL_divergence(ragged_logits, 
+                         second_logits, 
+                         distribution_function):
   
+  output_signature = tf.RaggedTensorSpec(shape=[None, None], 
+                                         ragged_rank=0)
+
+  ragged_KL = lambda x: distribution_function(logits=x[0]).kl_divergence(distribution_function(logits=x[1]))
+
+return tf.map_fn(
+  ragged_KL,
+  tf.stack(ragged_params, second_params, axis=1),
+  fn_output_signature=output_signature
+)
+
 
 class FACTMx_head_TopicModel(FACTMx_head):
   head_type='TopicModel'
@@ -63,6 +79,17 @@ class FACTMx_head_TopicModel(FACTMx_head):
     return tfp.distributions.RelaxedOneHotCategorical(logits=logits,
                                                       temperature=self.temperature)
 
+  def get_ragged_assignments(self, ragged_logits):
+    output_signature = tf.RaggedTensorSpec(shape=[None, None], 
+                                           ragged_rank=0)
+
+    ragged_sampling = lambda x: self.get_assignment_distribution(x).sample()
+
+    return tf.map_fn(
+      ragged_sampling,
+      ragged_logits,
+      fn_output_signature=output_signature
+    )
 
   def get_log_topic_profiles(self):
     paddings_profiles = tf.constant([[1, 0], [0, 0]])
@@ -94,7 +121,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
     log_likelihoods = tf.matmul(data, log_topic_profiles) if not self.ragged else ragged_mat_mul(data, log_topic_profiles)
 
     assignment_logits = tf.math.add(log_topic_proportions, log_likelihoods)
-    assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
+    assignment_sample = self.get_assignment_distribution(assignment_logits).sample() if not self.ragged else self.get_ragged_assignments(assignment_logits)
 
     return assignment_sample, assignment_logits, log_topic_proportions.numpy()
 
@@ -104,12 +131,20 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
     q_logits = tf.math.subtract(assignment_logits, log_topic_props)
 
-    kl_divergence = tf.reduce_mean(
-        tfp.distributions.OneHotCategorical(logits=q_logits).kl_divergence(
-            tfp.distributions.OneHotCategorical(logits=log_topic_props)
-            ),
+    if not self.ragged:
+      kl_divergence = tf.reduce_mean(
+          tfp.distributions.OneHotCategorical(logits=q_logits).kl_divergence(
+              tfp.distributions.OneHotCategorical(logits=log_topic_props)
+              ),
+          axis=-1
+      )
+    else:
+      kl_divergence = tf.reduce_mean(
+        ragged_KL_divergence(q_logits, 
+                             log_topic_props, 
+                             tfp.distributions.OneHotCategorical),
         axis=-1
-    )
+      )
 
     log_likelihood = tf.reduce_sum(
         tf.math.multiply(assignment_sample, q_logits),
@@ -127,7 +162,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
     log_topic_profiles = self.get_log_topic_profiles()
 
     assignment_logits = tf.matmul(data, log_topic_profiles) if not self.ragged else ragged_mat_mul(data, log_topic_profiles)
-    assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
+    assignment_sample = self.get_assignment_distribution(assignment_logits).sample() if not self.ragged else self.get_ragged_assignments(assignment_logits)
 
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
     log_proportions_sample = tf.math.log(proportions_sample)
