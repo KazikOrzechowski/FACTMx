@@ -169,7 +169,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
     encoder_input = log_proportions_sample[:,1:] - tf.reshape(log_proportions_sample[:,0], (-1, 1))
 
-    return {'encoder_input': tf.cast(encoder_input, tf.float32),
+    return {'encoder_input': encoder_input,
             'assignment_sample': assignment_sample}
 
 
