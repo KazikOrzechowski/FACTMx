@@ -46,7 +46,7 @@ class FACTMx_model(tf.Module):
 
   def encode(self, data):
     head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
-    head_encoded = [tf.cast(head_pass.pop('encoder_input'), tf.float64) for head_pass in head_kwargs]
+    head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
     return self.encoder.encode(tf.concat(head_encoded, axis=1)), head_kwargs
 
   def decode(self, latent, data):
@@ -58,7 +58,7 @@ class FACTMx_model(tf.Module):
 
   def elbo(self, data):
     head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
-    head_encoded = [tf.cast(head_pass.pop('encoder_input'), tf.float64) for head_pass in head_kwargs]
+    head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
 
     latent, kl_loss = self.encoder.encode_with_loss(tf.concat(head_encoded, axis=-1))
 
