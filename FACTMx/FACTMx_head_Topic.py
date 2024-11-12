@@ -10,9 +10,8 @@ from FACTMx.FACTMx_head import FACTMx_head
 def ragged_mat_mul(ragged_tensor, matrix):
   
   output_signature = tf.RaggedTensorSpec(shape=[None, None],
-                                         dtype=tf.double,
                                          ragged_rank=0)
-  ragged_mul_function = lambda x: tf.cast(tf.reshape(x, (-1, matrix.shape[0])), tf.double) @ tf.cast(matrix, tf.double)
+  ragged_mul_function = lambda x: tf.cast(tf.reshape(x, (-1, matrix.shape[0])), tf.float32) @ tf.cast(matrix, tf.float32)
   
   return tf.map_fn(
     ragged_mul_function,
@@ -26,7 +25,7 @@ def ragged_KL_divergence(ragged_logits,
                          distribution_function):
   
   output_signature = tf.RaggedTensorSpec(shape=[None, None], 
-                                         dtype=tf.double,
+                                         dtype=tf.float32,
                                          ragged_rank=0)
 
   ragged_KL = lambda x: distribution_function(logits=x[0]).kl_divergence(distribution_function(logits=x[1]))
@@ -83,7 +82,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
   def get_ragged_assignments(self, ragged_logits):
     output_signature = tf.RaggedTensorSpec(shape=[None, None], 
-                                           dtype=tf.double,
+                                           dtype=tf.float32,
                                            ragged_rank=0)
 
     ragged_sampling = lambda x: self.get_assignment_distribution(x).sample()
