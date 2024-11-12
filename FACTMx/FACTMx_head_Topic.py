@@ -29,11 +29,11 @@ def ragged_KL_divergence(ragged_logits,
 
   ragged_KL = lambda x: distribution_function(logits=x[0]).kl_divergence(distribution_function(logits=x[1]))
 
-return tf.map_fn(
-  ragged_KL,
-  tf.stack(ragged_params, second_params, axis=1),
-  fn_output_signature=output_signature
-)
+  return tf.map_fn(
+    ragged_KL,
+    tf.stack(ragged_params, second_params, axis=1),
+    fn_output_signature=output_signature
+  )
 
 
 class FACTMx_head_TopicModel(FACTMx_head):
