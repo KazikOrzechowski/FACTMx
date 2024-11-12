@@ -32,7 +32,7 @@ def ragged_KL_divergence(ragged_logits,
 
   return tf.map_fn(
     ragged_KL,
-    tf.stack(ragged_logits, second_logits, axis=1),
+    tf.stack([ragged_logits, second_logits], axis=1),
     fn_output_signature=output_signature
   )
 
