@@ -15,7 +15,7 @@ setup(
         'pandas',
         'numpy',
         'tensorflow',
-        'tensorflow_probability',
-        'tensorflow_keras'
+        'tensorflow-probability',
+        'tensorflow-keras'
     ]
 )
