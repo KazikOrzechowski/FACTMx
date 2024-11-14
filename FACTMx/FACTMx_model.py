@@ -50,7 +50,7 @@ class FACTMx_model(tf.Module):
     return self.encoder.encode(tf.concat(head_encoded, axis=1)), head_kwargs
 
   def decode(self, latent, data):
-    return [head.decode(latent, data[i]) for head in enumerate(self.heads)]
+    return [head.decode(latent, data[i]) for i, head in enumerate(self.heads)]
 
   def full_pass(self, data):
     latent, _ = self.encode(data)
