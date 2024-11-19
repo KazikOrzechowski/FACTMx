@@ -153,7 +153,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
     log_likelihood = tf.reduce_mean(log_likelihood)
 
-    return tf.reduce_sum([1.*kl_divergence, 
+    return tf.reduce_sum([beta*kl_divergence, 
                           -log_likelihood,
                           *self.decode_model.losses])
 
