@@ -105,6 +105,7 @@ class FACTMx_model(tf.Module):
         'name': self.name,
         'dim_latent': self.dim_latent,
         'beta': self.beta,
+        'loss_scales': self.loss_scales.numpy().tolist(),
         'heads_config': [head.get_config() for head in self.heads],
         'encoder_config': self.encoder.get_config()
     }
