@@ -73,6 +73,12 @@ class FACTMx_model(tf.Module):
     all_losses = tf.stack([kl_loss*self.beta, *decoding_losses])
     return -tf.reduce_mean(self.loss_scales * all_losses)
 
+  def update_heads_temperature(self, temperature_update_scale):
+    for head in self.heads:
+        if head.head_type == 'TopicModel':
+          head.temperature *= temperature_update_scale
+    return
+
   def train(self,
             dataset,
             validation_dataset=None,
@@ -83,7 +89,7 @@ class FACTMx_model(tf.Module):
     losses = []
     validation_losses = []
 
-    temperature_update = kwargs.pop('temperature_update', 1.)
+    temperature_update_scale = kwargs.pop('temperature_update', None)
 
     for epoch in range(epochs):
       if shuffle:
@@ -98,9 +104,8 @@ class FACTMx_model(tf.Module):
         self.optimizer.apply_gradients(zip(gradients, self.t_vars))
         losses.append(loss)
 
-      for head in self.heads:
-        if head.head_type == 'TopicModel':
-          head.temperature *= temperature_update
+      if temperature_update_scale is not None:
+        self.update_heads_temperature(temperature_update_scale)
 
       if validation_dataset is not None:
         validation_losses.append(-self.elbo(validation_dataset))
