@@ -21,7 +21,8 @@ class FACTMx_model(tf.Module):
                heads_config,
                encoder_config=None,
                optimizer_config=None,
-               beta=1, prior_params=None,
+               beta=1, loss_scales=None,
+               prior_params=None,
                name=None):
     super().__init__(name=name)
 
@@ -29,6 +30,7 @@ class FACTMx_model(tf.Module):
     self.beta = beta
     self.heads = [FACTMx_head.factory(**head_kwargs, dim_latent=self.dim_latent) for head_kwargs in heads_config]
     self.head_dims = [head.dim for head in self.heads]
+    self.loss_scales = tf.ones((1+len(self.heads),)) if loss_scales is None else tf.constant(loss_scales)
 
     if encoder_config is None:
       self.encoder = FACTMx_encoder(dim_latent, self.head_dims,
@@ -67,7 +69,7 @@ class FACTMx_model(tf.Module):
                                  beta=self.beta,
                                  **head_kwargs[i])
                           for i, head in enumerate(self.heads)]
-    return -tf.math.reduce_mean([kl_loss*self.beta, *decoding_losses])
+    return -self.loss_scales @ tf.stack([kl_loss*self.beta, *decoding_losses])
 
   def train(self,
             dataset,
