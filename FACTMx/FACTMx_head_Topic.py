@@ -37,6 +37,7 @@ def ragged_KL_divergence(ragged_logits,
   )
 
 
+
 class FACTMx_head_TopicModel(FACTMx_head):
   head_type='TopicModel'
 
@@ -46,12 +47,14 @@ class FACTMx_head_TopicModel(FACTMx_head):
                decode_config='linear',
                ragged=False,
                topic_profiles=None,
+               topic_L2_penalty=None,
                temperature=1E-4):
     super().__init__(dim, dim_latent, head_name)
     self.eps = 1E-5
     self.dim_words = dim_words
-    self.temperature = temperature
     self.ragged = ragged
+    self.topic_L2_penalty = topic_L2_penalty
+    self.temperature = temperature
 
     if decode_config == 'linear':
       self.decode_model = tf.keras.Sequential(
@@ -80,6 +83,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
     return tfp.distributions.RelaxedOneHotCategorical(logits=logits,
                                                       temperature=self.temperature)
 
+  
   def get_ragged_assignments(self, ragged_logits):
     output_signature = tf.RaggedTensorSpec(shape=[None, None], 
                                            dtype=tf.float32,
@@ -93,6 +97,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
       fn_output_signature=output_signature
     )
 
+  
   def get_log_topic_profiles(self):
     paddings_profiles = tf.constant([[1, 0], [0, 0]])
     log_topic_profiles = tf.pad(self.topic_profiles_trainable,
@@ -102,6 +107,15 @@ class FACTMx_head_TopicModel(FACTMx_head):
                                                           axis=0)
     return log_topic_profiles
 
+  
+  def get_topic_profiles(self):
+    return tf.math.exp(self.get_log_topic_profiles())
+
+  def get_topic_regularization_loss(self):
+    if self.topic_L2_penalty is None:
+      return tf.zeros(1)
+    else:
+      return self.topic_L2_penalty * tf.reduce_sum(self.get_topic_profiles() ** 2)
 
   def decode_log_topic_proportions(self, latent):
     paddings_proportions = tf.constant([[0, 0], [1, 0]])
@@ -150,11 +164,11 @@ class FACTMx_head_TopicModel(FACTMx_head):
         tf.math.multiply(assignment_sample, q_logits),
         axis=2
     )
-
     log_likelihood = tf.reduce_mean(log_likelihood)
-
+    
     return tf.reduce_sum([beta*kl_divergence, 
                           -log_likelihood,
+                          self.get_topic_regularization_loss(),
                           *self.decode_model.losses])
 
 
@@ -183,6 +197,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
         'ragged':self.ragged,
         'temperature':self.temperature,
         'topic_profiles':self.topic_profiles_trainable.numpy().tolist(),
+        'topic_L2_penalty':self.topic_L2_penalty,
         'decode_config':self.decode_model.get_config()
     }
     return config
