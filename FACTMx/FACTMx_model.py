@@ -69,7 +69,9 @@ class FACTMx_model(tf.Module):
                                  beta=self.beta,
                                  **head_kwargs[i])
                           for i, head in enumerate(self.heads)]
-    return -tf.reduce_mean(self.loss_scales * tf.concat([kl_loss*self.beta, *decoding_losses]))
+    
+    all_losses = tf.concat([kl_loss*self.beta, *decoding_losses], axis=0)
+    return -tf.reduce_mean(self.loss_scales * all_losses)
 
   def train(self,
             dataset,
