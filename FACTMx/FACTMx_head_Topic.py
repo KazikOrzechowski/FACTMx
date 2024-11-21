@@ -48,12 +48,14 @@ class FACTMx_head_TopicModel(FACTMx_head):
                ragged=False,
                topic_profiles=None,
                topic_L2_penalty=None,
+               proportions_L2_penalty=None,
                temperature=1E-4):
     super().__init__(dim, dim_latent, head_name)
     self.eps = 1E-5
     self.dim_words = dim_words
     self.ragged = ragged
     self.topic_L2_penalty = topic_L2_penalty
+    self.proportions_L2_penalty = proportions_L2_penalty
     self.temperature = temperature
 
     if decode_config == 'linear':
@@ -117,6 +119,12 @@ class FACTMx_head_TopicModel(FACTMx_head):
     else:
       return self.topic_L2_penalty * tf.reduce_sum(self.get_topic_profiles() ** 2)
 
+  def get_proportions_regularization_loss(self, log_topic_proportions):
+    if self.proportions_L2_penalty is None:
+      return tf.zeros(1)
+    else:
+      return self.proportions_L2_penalty * tf.reduce_sum(tf.math.exp(2 * log_topic_proportions))
+
   def decode_log_topic_proportions(self, latent):
     paddings_proportions = tf.constant([[0, 0], [1, 0]])
     log_topic_proportions = tf.pad(self.decode_model(latent),
@@ -139,7 +147,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
     assignment_logits = tf.math.add(log_topic_proportions, log_likelihoods)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample() if not self.ragged else self.get_ragged_assignments(assignment_logits)
 
-    return assignment_sample, assignment_logits, log_topic_proportions.numpy()
+    return assignment_sample, assignment_logits, log_topic_proportions
 
 
   def loss(self, data, latent, assignment_sample, beta=1):
@@ -169,6 +177,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
     return tf.reduce_sum([beta*kl_divergence, 
                           -log_likelihood,
                           self.get_topic_regularization_loss(),
+                          self.get_proportions_regularization_loss(log_topic_props),
                           *self.decode_model.losses])
 
 
@@ -198,6 +207,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
         'temperature':self.temperature,
         'topic_profiles':self.topic_profiles_trainable.numpy().tolist(),
         'topic_L2_penalty':self.topic_L2_penalty,
+        'proportions_L2_penalty':self.proportions_L2_penalty,
         'decode_config':self.decode_model.get_config()
     }
     return config
