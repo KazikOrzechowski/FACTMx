@@ -179,7 +179,7 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
            beta=1):
     _, assignment_logits, log_topic_proportions = self.decode(latent, data)
 
-    q_logits = tf.math.subtract(assignment_logits, log_topic_props)
+    q_logits = tf.math.subtract(assignment_logits, log_topic_proportions)
 
     if not self.ragged:
       kl_divergence = tf.reduce_mean(
