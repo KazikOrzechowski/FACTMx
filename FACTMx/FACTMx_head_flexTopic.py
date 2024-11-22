@@ -79,7 +79,7 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
     assert self.decode_model.input_shape == (None, self.dim_latent)
     assert self.decode_model.output_shape == (None, self.dim)
 
-    if encoder_classifier_config == 'linear:
+    if encoder_classifier_config == 'linear':
       self.encoder_classifier = tf.keras.Sequential(
                                   [tf.keras.Input(shape=(None, self.dim_words)), 
                                    tf.keras.layers.Dense(units=self.dim+1,
