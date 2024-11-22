@@ -89,7 +89,7 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
       self.encoder_classifier = tf.keras.Sequential.from_config(encoder_classifier_config)
 
     assert self.encoder_classifier.input_shape == (None, None, self.dim_words)
-    assert self.encoder_classifier.output_shape == (None, self.dim+1)
+    assert self.encoder_classifier.output_shape == (None, None, self.dim+1)
 
     #log proportions in topic profiles, with respect to fixed proportion of word0
     if topic_profiles is None:
