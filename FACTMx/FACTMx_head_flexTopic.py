@@ -233,7 +233,7 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
         'topic_profiles':self.topic_profiles_trainable.numpy().tolist(),
         'topic_L2_penalty':self.topic_L2_penalty,
         'proportions_L2_penalty':self.proportions_L2_penalty,
-        'encode_classifier_config':self.encoder_classifier.get_config(),
+        'encoder_classifier_config':self.encoder_classifier.get_config(),
         'decode_config':self.decode_model.get_config()
     }
     return config
