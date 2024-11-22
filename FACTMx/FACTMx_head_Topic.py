@@ -115,13 +115,13 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
   def get_topic_regularization_loss(self):
     if self.topic_L2_penalty is None:
-      return tf.zeros(1)
+      return tf.constant(0.)
     else:
       return self.topic_L2_penalty * tf.reduce_sum(self.get_topic_profiles() ** 2)
 
   def get_proportions_regularization_loss(self, log_topic_proportions):
     if self.proportions_L2_penalty is None:
-      return tf.zeros(1)
+      return tf.constant(0.)
     else:
       return self.proportions_L2_penalty * tf.reduce_sum(tf.math.exp(2 * log_topic_proportions))
 
