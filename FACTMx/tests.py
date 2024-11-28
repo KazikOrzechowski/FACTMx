@@ -9,8 +9,8 @@ def test_Normal_2D(sd1, sd2, covar=0., beta=1):
   data_loc = tf.zeros((2,))
   data_scale = tfp.math.fill_triangular([sd2, covar, sd1])
 
-  data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))]
-  dataset = tf.data.Dataset.from_tensor_slices(data)
+  data_normal = tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))
+  dataset = tf.data.Dataset.from_tensor_slices((data_normal,))
 
   val_data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((1000,))]
 
@@ -29,8 +29,8 @@ def test_Normal_2D_bias(sd1, sd2, covar=0., beta=1):
   data_loc = tf.ones((2,))
   data_scale = tfp.math.fill_triangular([sd2, covar, sd1])
 
-  data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))]
-  dataset = tf.data.Dataset.from_tensor_slices(data)
+  data_normal = tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))
+  dataset = tf.data.Dataset.from_tensor_slices((data_normal,))
 
   val_data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((1000,))]
 
@@ -51,8 +51,8 @@ def test_Normal_3D(sd1, sd2, covar=0., dim_latent=1, beta=1):
                                          sd1,
                                          sd2, covar])
 
-  data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))]
-  dataset = tf.data.Dataset.from_tensor_slices(data)
+  data_normal = tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))
+  dataset = tf.data.Dataset.from_tensor_slices((data_normal,))
 
   val_data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((1000,))]
 
@@ -71,8 +71,8 @@ def test_Normal_ND_with_noise(sd, n_dim, sd_noise=0.1, noise_dim=10, dim_latent=
   data_loc = tf.zeros((n_dim + noise_dim,))
   data_scale = tf.linalg.diag([sd]*n_dim + [sd_noise]*noise_dim)
 
-  data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))]
-  dataset = tf.data.Dataset.from_tensor_slices(data)
+  data_normal = tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))
+  dataset = tf.data.Dataset.from_tensor_slices((data_normal,))
 
   val_data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((1000,))]
 
@@ -95,10 +95,10 @@ def test_N_Bernoullis(n, scale=1, beta=1):
 
   logits = scale * latent
 
-  data = [tfp.distributions.Bernoulli(logits=logits).sample() for _ in range(n)]
-  data = [tf.cast(view, dtype='float32') for view in data]
+  data_bernoulli = [tfp.distributions.Bernoulli(logits=logits).sample() for _ in range(n)]
+  data_bernoulli = [tf.cast(view, dtype='float32') for view in data]
 
-  dataset = tf.data.Dataset.from_tensor_slices(data)
+  dataset = tf.data.Dataset.from_tensor_slices(tuple(data_bernoulli))
 
   val_data = []
 
@@ -138,7 +138,7 @@ def test_Bernoulli_Normal(n, beta=1):
   data_loc = latent @ decode_mat_loc
   data.append( tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample() )
 
-  dataset = tf.data.Dataset.zip( *[tf.data.Dataset.from_tensor_slices(view) for view in data] )
+  dataset = tf.data.Dataset.from_tensor_slices(tuple(data))
 
   val_data = []
 
@@ -277,8 +277,8 @@ def test_Topic(dim_latent, beta=1, n_patients=100, n_obs=1000):
 
   trials = tfp.distributions.Poisson(6).sample((n_patients,n_obs))
 
-  data = [tfp.distributions.Multinomial(trials, logits=obs_logits).sample()]
-  dataset = tf.data.Dataset.from_tensor_slices(data)
+  data = tfp.distributions.Multinomial(trials, logits=obs_logits).sample()
+  dataset = tf.data.Dataset.from_tensor_slices((data,))
 
   val_data = []
 
@@ -303,8 +303,8 @@ def test_Normal_noise_regularisation(sd, n_dim,
   data_loc = tf.zeros((n_dim + noise_dim,))
   data_scale = tf.linalg.diag([sd]*n_dim + [sd_noise]*noise_dim)
 
-  data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))]
-  dataset = tf.data.Dataset.from_tensor_slices(data)
+  data = tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((10000,))
+  dataset = tf.data.Dataset.from_tensor_slices((data,))
 
   val_data = [tfp.distributions.MultivariateNormalTriL(data_loc, data_scale).sample((1000,))]
 
