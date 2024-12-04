@@ -75,7 +75,7 @@ class FACTMx_model(tf.Module):
 
   def update_heads_temperature(self, temperature_update_scale):
     for head in self.heads:
-        if head.head_type == 'TopicModel':
+        if 'temperature' in head.__dict__.keys():
           head.temperature *= temperature_update_scale
     return
 
