@@ -99,6 +99,7 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
                                                       dtype=tf.float32)
 
     self.t_vars = [*self.decode_model.trainable_variables,
+                   *self.encoder_classifier.trainable_variables,
                    self.topic_profiles_trainable]
 
 
