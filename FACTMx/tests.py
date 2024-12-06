@@ -239,7 +239,7 @@ def test_Multinomial(dim_latent, beta=1):
   return model_config, dataset, val_data, {'logits': padded_logits}
 
 
-def test_Topic(dim_latent, beta=1, n_patients=100, n_obs=1000):
+def test_Topic(dim_latent, beta=1, n_patients=100, n_obs=1000, flexTopic=True):
   latent_loc = tf.zeros((2,))
   latent_scale = tf.eye(2)
 
@@ -282,8 +282,12 @@ def test_Topic(dim_latent, beta=1, n_patients=100, n_obs=1000):
 
   val_data = []
 
-  heads_config = [{'head_type':'TopicModel', 'dim':3,
-                   'dim_words':3, 'head_name':'IF'}]
+  if flexTopic:
+    heads_config = [{'head_type':'FlexTopicModel', 'dim':3,
+                     'dim_words':3, 'head_name':'IF'}]
+  else:
+    heads_config = [{'head_type':'TopicModel', 'dim':3,
+                     'dim_words':3, 'head_name':'IF'}]
 
   model_config = {
     'dim_latent': dim_latent, 
