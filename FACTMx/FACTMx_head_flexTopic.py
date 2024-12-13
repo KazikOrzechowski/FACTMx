@@ -20,7 +20,7 @@ def ragged_mat_mul(ragged_tensor, matrix):
 
 def ragged_classifier_pass(ragged_tensor, model):
   output_signature = tf.RaggedTensorSpec(shape=[1, None, None],
-                                         ragged_rank=0)
+                                         ragged_rank=1)
   ragged_pass = lambda tensor: model(tf.reshape(tensor, (1, -1, model.input_shape[-1])))
   
   return tf.map_fn(
