@@ -24,7 +24,7 @@ def ragged_classifier_pass(ragged_tensor, model):
 
   model_shape = (1, -1, model.input_shape[-1])
   ragged_pass = lambda tensor: tf.reshape(
-    model(tf.reshape(tensor, model_shape),
+    model(tf.reshape(tensor, model_shape)),
     (-1, model.output_shape[-1])
   )
   
