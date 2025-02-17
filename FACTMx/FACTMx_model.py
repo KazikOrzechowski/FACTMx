@@ -142,7 +142,7 @@ class FACTMx_model(tf.Module):
     with open(f'{model_path}/model_config.json', 'w') as f:
       config = self.get_config()
       if not include_optimizer:
-        config.pop('optimizer_config')
+        config.pop('optimizer_config', None)
       json.dump(config, f)
 
     self.encoder.save_weights(f'{model_path}/encoder')
@@ -159,7 +159,7 @@ class FACTMx_model(tf.Module):
       config = json.load(f)
 
     if not include_optimizer:
-      config.pop('optimizer_config')
+      config.pop('optimizer_config', None)
     model = FACTMx_model.from_config(config)
 
     model.encoder.load_weights(f'{model_path}/encoder')
