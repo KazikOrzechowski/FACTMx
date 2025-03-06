@@ -94,7 +94,7 @@ class FACTMx_model(tf.Module):
 
     for epoch in range(epochs):
       if shuffle:
-        dataset.shuffle(buffer_size=dataset.cardinality())
+        dataset = dataset.shuffle(buffer_size=dataset.cardinality())
 
       batched_dataset = dataset.batch(batch_size)
 
