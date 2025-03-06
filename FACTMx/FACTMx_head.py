@@ -75,7 +75,7 @@ class FACTMx_head_Bernoulli(FACTMx_head):
 
   def loss(self, data, latent, beta=1):
     #return -loglikelihood of data given its latent point
-    log_prob = tf.reduce_sum(self.make_decoder(latent).log_prob(data), axis=1)
+    log_prob = self.make_decoder(latent).log_prob(data)
 
     loss = -tf.reduce_mean(log_prob)
     loss += tf.reduce_sum(self.decode_model.losses)
