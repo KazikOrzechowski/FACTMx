@@ -9,6 +9,7 @@ from FACTMx.FACTMx_encoder import FACTMx_encoder
 
 from logging import warning
 import json
+import h5py
 import os
 
 class FACTMx_model(tf.Module):
@@ -150,10 +151,10 @@ class FACTMx_model(tf.Module):
       head.save_weights(f'{model_path}/head{i}')
 
     if include_optimizer:
-      optimizer_state = {str(i): v.numpy().tolist() for i, v in enumerate(self.optimizer.variables)}
-      with open(f'{model_path}/optimizer_state.json', 'w') as f:
-        json.dump(optimizer_state, f)
-
+      with h5py.File(f'{model_path}/optimizer_state.hdf5', 'w') as h5_store:
+        for i, v in enumerate(self.optimizer.variables):
+          h5_store.create_dataset(name=str(i), data=v.numpy())
+      
   def load(model_path, include_optimizer=False):
     with open(f'{model_path}/model_config.json', 'r') as f:
       config = json.load(f)
@@ -167,9 +168,8 @@ class FACTMx_model(tf.Module):
       head.load_weights(f'{model_path}/head{i}')
 
     if include_optimizer:
-      with open(f'{model_path}/optimizer_state.json', 'r') as f:
-        optimizer_state = json.load(f)
-      model.optimizer.build(model.t_vars)
-      model.optimizer.load_own_variables(optimizer_state)
+      with h5py.File(f'{model_path}/optimizer_state.hdf5', 'r') as h5_store:
+        model.optimizer.build(model.t_vars)
+        model.optimizer.load_own_variables(h5_store)
 
     return model
