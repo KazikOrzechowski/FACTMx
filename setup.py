@@ -15,6 +15,7 @@ setup(
         'pandas',
         'numpy',
         'tensorflow',
-        'tensorflow-probability'
+        'tensorflow-probability',
+        'h5py
     ]
 )
