@@ -16,6 +16,6 @@ setup(
         'numpy',
         'tensorflow',
         'tensorflow-probability',
-        'h5py
+        'h5py',
     ]
 )
