@@ -1,4 +1,8 @@
-from FACTMx_head import *
+import tensorflow as tf
+import tensorflow_probability as tfp
+import numpy as np
+
+from FACTMx.FACTMx_head import FACTMx_head
 from FACTMx.custom_keras_layers import ConstantResponse
 
 class FACTMx_head_ZeroInflatedMultiNormal(FACTMx_head):
