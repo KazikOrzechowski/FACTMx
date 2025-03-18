@@ -9,11 +9,13 @@ from FACTMx.custom_keras_layers import ConstantResponse
 
 class FACTMx_head(tf.Module):
   dim: int
+  dim_to_encoder: int
   dim_latent: int
   head_name: str
 
-  def __init__(self, dim, dim_latent, head_name):
+  def __init__(self, dim, dim_preencoded=None, dim_latent, head_name):
     self.dim = dim
+    self.dim_preencoded = dim_data if dim_preencoded is None else dim_preencoded
     self.dim_latent = dim_latent
     self.head_name = head_name
 
@@ -33,12 +35,14 @@ class FACTMx_head_Bernoulli(FACTMx_head):
 
   def __init__(self,
                dim,
+               dim_preencoded=None,
                dim_latent,
                head_name,
                eps=1E-5,
                decode_config='linear',
+               encode_config=None,
                **kwargs):
-    super().__init__(dim, dim_latent, head_name,)
+    super().__init__(dim, dim_preencoded, dim_latent, head_name,)
     self.eps = eps
 
     if decode_config == 'linear':
@@ -52,7 +56,18 @@ class FACTMx_head_Bernoulli(FACTMx_head):
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
 
-    self.t_vars = self.decode_model.trainable_variables
+    if encode_config is not None:
+      self.encode_model = tf.keras.Sequential.from_config(encode_config)
+      assert self.encode_model.output_shape == (None, self.dim_preencoded)
+      assert self.encode_model.input_shape == (None, self.dim)
+    else:
+      self.encode_model = None
+
+    if self.encode_model is None:
+      self.t_vars = self.decode_model.trainable_variables
+    else:
+      self.t_vars = [*self.decode_model.trainable_variables,
+                     *self.encode_model.trainable_variables]
 
 
   def decode_params(self, latent):
@@ -69,9 +84,12 @@ class FACTMx_head_Bernoulli(FACTMx_head):
     return self.make_decoder(latent).sample()
 
   def encode(self, data):
-    #give logits
-    logits = tf.math.log((data+self.eps) / (1-data+self.eps))
-    return {'encoder_input':data}
+    #give logits if no encoder model is present
+    if self.encode_model is None:
+      preencoded = tf.math.log((data+self.eps) / (1-data+self.eps))
+    else:
+      preencoded = self.encode_model(data)
+    return {'encoder_input':preencoded}
 
   def loss(self, data, latent, beta=1):
     #return -loglikelihood of data given its latent point
@@ -86,9 +104,11 @@ class FACTMx_head_Bernoulli(FACTMx_head):
     config = {
         'head_type': self.head_type,
         'dim': self.dim,
+        'dim_preencoded': self.dim_preencoded,
         'dim_latent': self.dim_latent,
         'head_name': self.head_name,
-        'decode_config': self.decode_model.get_config()
+        'decode_config': self.decode_model.get_config(),
+        'encode_config': self.encode_model.get_config() if self.encode_model is not None else None
     }
     return config
 
@@ -96,21 +116,26 @@ class FACTMx_head_Bernoulli(FACTMx_head):
     return FACTMx_head_Bernoulli(**config)
 
   def save_weights(self, head_path):
-    self.decode_model.save_weights(f'{head_path}.weights.h5')
+    self.decode_model.save_weights(f'{head_path}_decode.weights.h5')
+    if self.encode_model is not None:
+      self.encode_model.save_weights(f'{head_path}_encode.weights.h5')
 
   def load_weights(self, head_path):
-    self.decode_model.load_weights(f'{head_path}.weights.h5')
-
+    self.decode_model.load_weights(f'{head_path}_decode.weights.h5')
+    if self.encode_model is not None:
+      self.encode_model.load_weights(f'{head_path}_encode.weights.h5')
 
 
 class FACTMx_head_Multinomial(FACTMx_head):
   head_type = 'Multinomial'
 
   def __init__(self,
-               dim, dim_latent, head_name,
+               dim, 
+               dim_preencoded=None, 
+               dim_latent, head_name,
                decode_config='linear',
                eps = 1E-1, **kwargs):
-    super().__init__(dim, dim_latent, head_name)
+    super().__init__(dim, dim_preencoded, dim_latent, head_name)
     self.eps = eps
 
     if decode_config == 'linear':
@@ -124,7 +149,18 @@ class FACTMx_head_Multinomial(FACTMx_head):
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
 
-    self.t_vars = self.decode_layer.trainable_variables
+    if encode_config is not None:
+      self.encode_model = tf.keras.Sequential.from_config(encode_config)
+      assert self.encode_model.output_shape == (None, self.dim_preencoded)
+      assert self.encode_model.input_shape == (None, self.dim)
+    else:
+      self.encode_model = None
+
+    if self.encode_model is None:
+      self.t_vars = self.decode_model.trainable_variables
+    else:
+      self.t_vars = [*self.decode_model.trainable_variables,
+                     *self.encode_model.trainable_variables]
 
 
   def decode_params(self, latent):
