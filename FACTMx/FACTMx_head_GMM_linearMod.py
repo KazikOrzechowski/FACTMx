@@ -74,7 +74,7 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
     if mixture_cov_perturb == 'zeros':
       _cov_perturb_shape = (dim+1, dim_normal, self.n_cov_perturb_factor)
       mixture_cov_perturb = tf.keras.initializers.Zeros()(shape=_cov_perturb_shape)
-    elif: mixture_cov_perturb == 'random':
+    elif mixture_cov_perturb == 'random':
       _cov_perturb_shape = (dim+1, dim_normal, self.n_cov_perturb_factor)
       mixture_cov_perturb = tf.keras.initializers.Orthogonal()(shape=_cov_perturb_shape)
 
