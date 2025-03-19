@@ -12,7 +12,7 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
                head_name,
                decode_mixture_config='linear',
                encoder_classifier_config='linear',
-               mixture_params={'loc': 'random', 'log_cov_diag': 0., 'cov_perturb_factor': None},
+               mixture_params={'loc': 'random', 'log_cov_diag': 0., 'cov_perturb_factor': 'zeros'},
                temperature=1E-4, eps=1E-3, max_n_perturb_factor=2,
                l1_scale=0.1):
     super().__init__(dim, dim_latent, head_name)
@@ -70,10 +70,13 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
                                               trainable=True,
                                               dtype=tf.float32)
 
-    mixture_cov_perturb = mixture_params.pop('cov_perturb_factor', None)
-    if mixture_cov_perturb is None:
+    mixture_cov_perturb = mixture_params.pop('cov_perturb_factor', 'zeros')
+    if mixture_cov_perturb == 'zeros':
       _cov_perturb_shape = (dim+1, dim_normal, self.n_cov_perturb_factor)
       mixture_cov_perturb = tf.keras.initializers.Zeros()(shape=_cov_perturb_shape)
+    elif: mixture_cov_perturb == 'random':
+      _cov_perturb_shape = (dim+1, dim_normal, self.n_cov_perturb_factor)
+      mixture_cov_perturb = tf.keras.initializers.Orthogonal()(shape=_cov_perturb_shape)
 
     self.mixture_cov_perturb = tf.keras.Variable(mixture_cov_perturb,
                                                  trainable=True,
