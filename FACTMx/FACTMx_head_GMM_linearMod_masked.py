@@ -26,7 +26,8 @@ class FACTMx_head_GMM_linearMod_masked(FACTMx_head):
       self.decode_mixture_model = tf.keras.Sequential(
                                                       [tf.keras.Input(shape=(self.dim_latent,)),
                                                        tf.keras.layers.Dense(units=self.dim,
-                                                                             kernel_initializer='orthogonal')]
+                                                                             kernel_initializer='random_normal',
+                                                                             bias_initalizer='ones')]
                                   )
     else:
       self.decode_mixture_model = tf.keras.Sequential.from_config(decode_mixture_config)
