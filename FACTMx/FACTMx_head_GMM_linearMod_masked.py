@@ -208,7 +208,7 @@ class FACTMx_head_GMM_linearMod_masked(FACTMx_head):
     return config
 
   def from_config(config):
-    return FACTMx_head_GMM_linearMod(**config)
+    return FACTMx_head_GMM_linearMod_masked(**config)
 
   def save_weights(self, head_path):
     self.decode_mixture_model.save_weights(f'{head_path}_decode_mixture_model.weights.h5')
