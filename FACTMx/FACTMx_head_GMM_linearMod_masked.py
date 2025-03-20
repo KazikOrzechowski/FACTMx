@@ -134,7 +134,7 @@ class FACTMx_head_GMM_linearMod_masked(FACTMx_head):
 
     _broadcastable_shape = (-1, tf.shape(data)[1], 1, self.dim_normal)
     reshaped_data = tf.reshape(data, _broadcastable_shape)
-    masked_data = reshaped_data + (reshaped_data.numpy() == 0).astype('float16') * mixtures.locs
+    masked_data = reshaped_data + (reshaped_data.numpy() == 0).astype('float16') * mixtures.loc
     log_likelihoods = mixtures.log_prob(masked_data)
 
     assignment_logits = tf.math.add(log_mixture_probs, log_likelihoods)
