@@ -48,7 +48,7 @@ class FACTMx_head_GMM_linearMod_masked(FACTMx_head):
 
     mixture_locs = mixture_params.pop('loc', 'random')
     if mixture_locs == 'random':
-      mixture_locs = tf.keras.initializers.Orthogonal()(shape=(dim+1, dim_normal))
+      mixture_locs = tf.keras.initializers.RandomNormal()(shape=(dim+1, dim_normal))
 
     self.mixture_locs = tf.keras.Variable(mixture_locs,
                                           trainable=True,
