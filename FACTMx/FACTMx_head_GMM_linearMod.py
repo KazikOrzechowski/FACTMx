@@ -164,11 +164,14 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
     log_likelihood = tf.reduce_mean(log_likelihood)
 
     linear_mod_penalty = self.l1_scale * tf.reduce_mean(tf.math.abs(self.linear_mixture_modification))
+    mixture_params_penalty = self.l1_scale * (tf.reduce_sum(tf.math.abs(self.mixture_cov_perturb)) + 
+                                              tf.reduce_mean(tf.math.exp(self.mixture_log_covs)))
 
     return tf.reduce_sum([beta*kl_divergence,
                           -log_likelihood,
                           *self.decode_mixture_model.losses,
-                          linear_mod_penalty])
+                          linear_mod_penalty,
+                          mixture_params_penalty])
 
 
   def encode(self, data):
