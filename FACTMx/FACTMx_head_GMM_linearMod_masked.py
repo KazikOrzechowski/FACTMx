@@ -26,7 +26,8 @@ class FACTMx_head_GMM_linearMod_masked(FACTMx_head):
       self.decode_mixture_model = tf.keras.Sequential(
                                                       [tf.keras.Input(shape=(self.dim_latent,)),
                                                        tf.keras.layers.Dense(units=self.dim,
-                                                                             kernel_initializer='orthogonal')]
+                                                                             kernel_initializer='random_normal',
+                                                                             bias_initalizer='ones')]
                                   )
     else:
       self.decode_mixture_model = tf.keras.Sequential.from_config(decode_mixture_config)
@@ -48,7 +49,7 @@ class FACTMx_head_GMM_linearMod_masked(FACTMx_head):
 
     mixture_locs = mixture_params.pop('loc', 'random')
     if mixture_locs == 'random':
-      mixture_locs = tf.keras.initializers.Orthogonal()(shape=(dim+1, dim_normal))
+      mixture_locs = tf.keras.initializers.RandomNormal()(shape=(dim+1, dim_normal))
 
     self.mixture_locs = tf.keras.Variable(mixture_locs,
                                           trainable=True,
@@ -122,7 +123,10 @@ class FACTMx_head_GMM_linearMod_masked(FACTMx_head):
                                 'CONSTANT')
     log_mixture_probs = tf.keras.activations.log_softmax(log_mixture_probs,
                                                           axis=-1)
-    return log_mixture_probs
+
+    # minimum topic proportion is EPS
+    log_eps = tf.constant(tf.math.log(self.eps), shape=log_mixture_probs.shape)
+    return tf.reduce_logsumexp(tf.stack([log_mixture_probs, log_eps]), axis=0)
 
 
   def decode(self, latent, data):
@@ -165,12 +169,17 @@ class FACTMx_head_GMM_linearMod_masked(FACTMx_head):
     )
     log_likelihood = tf.reduce_mean(log_likelihood)
 
-    linear_mod_penalty = self.l1_scale * tf.reduce_mean(tf.math.abs(self.linear_mixture_modification))
+    linear_mod_penalty = self.l1_scale * tf.reduce_sum(tf.math.abs(self.linear_mixture_modification))
+    mixture_params_penalty = self.l1_scale * (tf.reduce_sum(tf.math.abs(self.mixture_cov_perturb)) + 
+                                              tf.reduce_sum(tf.math.exp(self.mixture_log_covs)))
+
 
     return tf.reduce_sum([beta*kl_divergence,
                           -log_likelihood,
                           *self.decode_mixture_model.losses,
-                          linear_mod_penalty])
+                          linear_mod_penalty,
+                          mixture_params_penalty,
+                          ])
 
 
   def encode(self, data):
@@ -217,3 +226,4 @@ class FACTMx_head_GMM_linearMod_masked(FACTMx_head):
   def load_weights(self, head_path):
     self.decode_mixture_model.load_weights(f'{head_path}_decode_mixture_model.weights.h5')
     self.encoder_classifier.load_weights(f'{head_path}_encoder_classifier.weights.h5')
+
