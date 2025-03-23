@@ -126,7 +126,7 @@ class FACTMx_head_GMM(FACTMx_head):
 
     log_likelihoods = tf.math.subtract(assignment_logits, log_mixture_probs)
 
-    kl_divergence = tf.reduce_mean(
+    kl_divergence = tf.reduce_sum(
           tfp.distributions.OneHotCategorical(logits=encoder_assignment_logits).kl_divergence(
               tfp.distributions.OneHotCategorical(logits=log_mixture_probs)
               )
@@ -134,12 +134,13 @@ class FACTMx_head_GMM(FACTMx_head):
 
     log_likelihood = tf.reduce_sum(
         tf.math.multiply(encoder_assignment_sample, log_likelihoods),
-        axis=2
+        #axis=2
     )
-    log_likelihood = tf.reduce_mean(log_likelihood)
+    #log_likelihood = tf.reduce_sum(log_likelihood)
+    batch_size = data.shape[0]
 
-    return tf.reduce_sum([beta*kl_divergence,
-                          -log_likelihood,
+    return tf.reduce_sum([beta*kl_divergence/batch_size,
+                          -log_likelihood/batch_size,
                           *self.decode_model.losses])
 
 
