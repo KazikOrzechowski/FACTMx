@@ -155,7 +155,7 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
 
     log_likelihoods = tf.math.subtract(assignment_logits, log_mixture_probs)
 
-    kl_divergence = tf.reduce_mean(
+    kl_divergence = tf.reduce_sum(
           tfp.distributions.OneHotCategorical(logits=encoder_assignment_logits).kl_divergence(
               tfp.distributions.OneHotCategorical(logits=log_mixture_probs)
               )
@@ -163,19 +163,21 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
 
     log_likelihood = tf.reduce_sum(
         tf.math.multiply(encoder_assignment_sample, log_likelihoods),
-        axis=2
+        #axis=2
     )
-    log_likelihood = tf.reduce_mean(log_likelihood)
+    #log_likelihood = tf.reduce_mean(log_likelihood)
 
-    linear_mod_penalty = self.l1_scale * tf.reduce_mean(tf.math.abs(self.linear_mixture_modification))
+    linear_mod_penalty = self.l1_scale * tf.reduce_sum(tf.math.abs(self.linear_mixture_modification))
     mixture_params_penalty = self.l1_scale * (tf.reduce_sum(tf.math.abs(self.mixture_cov_perturb)) + 
                                               tf.reduce_sum(tf.math.exp(self.mixture_log_covs)))
     if self.regularise_orthogonal:
       normalized_topic = tf.math.l2_normalize(self.mixture_locs, axis=0)
       mixture_params_penalty += self.l1_scale * tf.reduce_sum(normalized_topic @ tf.transpose(normalized_topic))
 
-    return tf.reduce_sum([beta*kl_divergence,
-                          -log_likelihood,
+    batch_size = data.shape[0]
+
+    return tf.reduce_sum([beta*kl_divergence/batch_size,
+                          -log_likelihood/batch_size,
                           *self.decode_mixture_model.losses,
                           linear_mod_penalty,
                           mixture_params_penalty])
