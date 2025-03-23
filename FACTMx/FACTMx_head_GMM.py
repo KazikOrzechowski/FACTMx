@@ -14,12 +14,18 @@ class FACTMx_head_GMM(FACTMx_head):
                decode_config='linear',
                encoder_classifier_config='linear',
                mixture_params={'loc': 'random', 'log_cov_diag': 0., 'cov_perturb_factor': None},
-               temperature=1E-4, eps=1E-3, max_n_perturb_factor=2):
+               temperature=1E-4, 
+               eps=1E-3, 
+               max_n_perturb_factor=2,
+               l1_scale=.1,
+               regularise_orthogonal=True):
     super().__init__(dim, dim_latent, head_name)
     self.dim_normal = dim_normal
     self.temperature = temperature
     self.eps = eps
     self.n_cov_perturb_factor = min(dim_normal, max_n_perturb_factor)
+    self.l1_scale = l1_scale
+    self.regularise_orthogonal = regularise_orthogonal
 
     if decode_config == 'linear':
       self.decode_model = tf.keras.Sequential(
@@ -137,10 +143,17 @@ class FACTMx_head_GMM(FACTMx_head):
         #axis=2
     )
     #log_likelihood = tf.reduce_sum(log_likelihood)
+
+    mixture_params_penalty = self.l1_scale * (tf.reduce_sum(tf.math.abs(self.mixture_cov_perturb)) + 
+                                              tf.reduce_sum(tf.math.exp(self.mixture_log_covs)))
+    if self.regularise_orthogonal:
+      normalized_topic = tf.math.l2_normalize(self.mixture_locs, axis=0)
+      mixture_params_penalty += self.l1_scale * tf.reduce_sum(normalized_topic @ tf.transpose(normalized_topic))
     batch_size = data.shape[0]
 
     return tf.reduce_sum([beta*kl_divergence/batch_size,
                           -log_likelihood/batch_size,
+                          mixture_params_penalty,
                           *self.decode_model.losses])
 
 
