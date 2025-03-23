@@ -11,7 +11,7 @@ class FACTMx_head_GMM(FACTMx_head):
   def __init__(self,
                dim, dim_latent, dim_normal,
                head_name,
-               decode_config='linear',
+               decode_mixture_config='linear',
                encoder_classifier_config='linear',
                mixture_params={'loc': 'random', 'log_cov_diag': 0., 'cov_perturb_factor': None},
                temperature=1E-4, 
