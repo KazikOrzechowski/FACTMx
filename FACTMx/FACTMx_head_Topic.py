@@ -156,13 +156,13 @@ class FACTMx_head_TopicModel(FACTMx_head):
     q_logits = tf.math.subtract(assignment_logits, log_topic_props)
 
     if not self.ragged:
-      kl_divergence = tf.reduce_mean(
+      kl_divergence = tf.reduce_sum(
           tfp.distributions.OneHotCategorical(logits=q_logits).kl_divergence(
               tfp.distributions.OneHotCategorical(logits=log_topic_props)
               )
       )
     else:
-      kl_divergence = tf.reduce_mean(
+      kl_divergence = tf.reduce_sum(
         ragged_KL_divergence(q_logits, 
                              log_topic_props, 
                              tfp.distributions.OneHotCategorical)
@@ -170,12 +170,14 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
     log_likelihood = tf.reduce_sum(
         tf.math.multiply(assignment_sample, q_logits),
-        axis=2
+        #axis=2
     )
-    log_likelihood = tf.reduce_mean(log_likelihood)
+    #log_likelihood = tf.reduce_mean(log_likelihood)
+
+    batch_size = data.shape[0]
     
-    return tf.reduce_sum([beta*kl_divergence, 
-                          -log_likelihood,
+    return tf.reduce_sum([beta*kl_divergence/batch_size, 
+                          -log_likelihood/batch_size,
                           self.get_topic_regularization_loss(),
                           self.get_proportions_regularization_loss(log_topic_props),
                           *self.decode_model.losses])
