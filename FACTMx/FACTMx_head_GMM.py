@@ -27,14 +27,14 @@ class FACTMx_head_GMM(FACTMx_head):
     self.l1_scale = l1_scale
     self.regularise_orthogonal = regularise_orthogonal
 
-    if decode_config == 'linear':
+    if decode_mixture_config == 'linear':
       self.decode_model = tf.keras.Sequential(
                             [tf.keras.Input(shape=(self.dim_latent,)),
                              tf.keras.layers.Dense(units=self.dim,
                                                    kernel_initializer='orthogonal')]
                           )
     else:
-      self.decode_model = tf.keras.Sequential.from_config(decode_config)
+      self.decode_model = tf.keras.Sequential.from_config(decode_mixture_config)
 
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
@@ -186,7 +186,7 @@ class FACTMx_head_GMM(FACTMx_head):
             'cov_perturb_factor':self.mixture_cov_perturb.numpy().tolist()
         },
         'encoder_classifier_config':self.encoder_classifier.get_config(),
-        'decode_config':self.decode_model.get_config()
+        'decode_mixture_config':self.decode_model.get_config()
     }
     return config
 
