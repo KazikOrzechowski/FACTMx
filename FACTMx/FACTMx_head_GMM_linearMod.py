@@ -126,7 +126,10 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
                                 'CONSTANT')
     log_mixture_probs = tf.keras.activations.log_softmax(log_mixture_probs,
                                                           axis=-1)
-    return log_mixture_probs
+
+    # minimum topic proportion is EPS
+    log_eps = tf.constant(tf.math.log(self.eps), shape=log_mixture_probs.shape)
+    return tf.reduce_logsumexp(tf.stack([log_mixture_probs, log_eps]), axis=0)
 
 
   def decode(self, latent, data):
