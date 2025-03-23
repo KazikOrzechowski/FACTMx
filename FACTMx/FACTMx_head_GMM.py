@@ -62,7 +62,7 @@ class FACTMx_head_GMM(FACTMx_head):
     mixture_log_covs = mixture_params.pop('log_cov_diag', 0.)
     if isinstance(mixture_log_covs, float):
       mixture_log_covs = mixture_log_covs + tf.keras.initializers.Zeros()(shape=(dim+1, dim_normal))
-
+    
     self.mixture_log_covs = tf.keras.Variable(mixture_log_covs,
                                               trainable=True,
                                               dtype=tf.float32)
@@ -71,6 +71,9 @@ class FACTMx_head_GMM(FACTMx_head):
     if mixture_cov_perturb is None:
       _cov_perturb_shape = (dim+1, dim_normal, self.n_cov_perturb_factor)
       mixture_cov_perturb = tf.keras.initializers.Zeros()(shape=_cov_perturb_shape)
+    elif mixture_cov_perturb == 'random':
+      _cov_perturb_shape = (dim+1, dim_normal, self.n_cov_perturb_factor)
+      mixture_cov_perturb = tf.keras.initializers.Orthogonal()(shape=_cov_perturb_shape)
 
     self.mixture_cov_perturb = tf.keras.Variable(mixture_cov_perturb,
                                                  trainable=True,
