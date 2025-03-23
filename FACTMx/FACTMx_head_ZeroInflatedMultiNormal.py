@@ -97,7 +97,9 @@ class FACTMx_head_ZeroInflatedMultiNormal(FACTMx_head):
 
     log_like_total = tf.math.reduce_logsumexp(stacked, axis=2)
 
-    loss = -tf.reduce_mean(log_like_total)
+    loss = -tf.reduce_sum(log_like_total)
+    batch_size = data.shape[0]
+    loss /= batch_size
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
 
