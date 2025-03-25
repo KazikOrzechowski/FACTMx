@@ -18,6 +18,7 @@ class FACTMx_head_GMM(FACTMx_head):
                eps=1E-3, 
                max_n_perturb_factor=2,
                l1_scale=.1,
+               prop_loss_scale=1.,
                regularise_orthogonal=True):
     super().__init__(dim, dim_latent, head_name)
     self.dim_normal = dim_normal
@@ -25,6 +26,7 @@ class FACTMx_head_GMM(FACTMx_head):
     self.eps = eps
     self.n_cov_perturb_factor = min(dim_normal, max_n_perturb_factor)
     self.l1_scale = l1_scale
+    self.prop_loss_scale = prop_loss_scale
     self.regularise_orthogonal = regularise_orthogonal
 
     if decode_mixture_config == 'linear':
@@ -157,7 +159,7 @@ class FACTMx_head_GMM(FACTMx_head):
       mixture_params_penalty += self.l1_scale * tf.reduce_sum(normalized_topic @ tf.transpose(normalized_topic))
     batch_size = data.shape[0]
 
-    return tf.reduce_sum([beta*kl_divergence/batch_size,
+    return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size,
                           -log_likelihood/batch_size,
                           mixture_params_penalty,
                           *self.decode_model.losses])
