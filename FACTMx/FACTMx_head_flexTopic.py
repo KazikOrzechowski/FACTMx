@@ -63,13 +63,16 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
                topic_profiles=None,
                topic_L2_penalty=None,
                proportions_L2_penalty=None,
+               prop_loss_scale=1.,
+               eps=1E-3,
                temperature=1E-4):
     super().__init__(dim, dim_latent, head_name)
-    self.eps = 1E-5
+    self.eps = eps
     self.dim_words = dim_words
     self.ragged = ragged
     self.topic_L2_penalty = topic_L2_penalty
     self.proportions_L2_penalty = proportions_L2_penalty
+    self.prop_loss_scale = prop_loss_scale
     self.temperature = temperature
 
     if decode_config == 'linear':
@@ -159,7 +162,10 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
                                    'CONSTANT')
     log_topic_proportions = tf.keras.activations.log_softmax(log_topic_proportions,
                                                              axis=-1)
-    return log_topic_proportions
+
+    #minimal topic proportions should be around eps
+    log_eps = tf.constant(tf.math.log(self.eps), shape=log_topic_proportions.shape)
+    return tf.reduce_logsumexp(tf.stack([log_topic_proportions, log_eps]), axis=0)
 
 
   def decode(self, latent, data):
@@ -207,7 +213,7 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
     #log_likelihood = tf.reduce_mean(log_likelihood)
     batch_size = data.shape[0]
     
-    return tf.reduce_sum([beta*kl_divergence/batch_size, 
+    return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size, 
                           -log_likelihood/batch_size,
                           self.get_topic_regularization_loss(),
                           self.get_proportions_regularization_loss(log_topic_proportions),
@@ -237,6 +243,8 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
         'head_type':self.head_type,
         'ragged':self.ragged,
         'temperature':self.temperature,
+        'eps':self.eps,
+        'prop_loss_scale':self.prop_loss_scale,
         'topic_profiles':self.topic_profiles_trainable.numpy().tolist(),
         'topic_L2_penalty':self.topic_L2_penalty,
         'proportions_L2_penalty':self.proportions_L2_penalty,
