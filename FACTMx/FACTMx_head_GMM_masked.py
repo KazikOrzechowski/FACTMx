@@ -5,7 +5,7 @@ import numpy as np
 from FACTMx.FACTMx_head import FACTMx_head
 
 
-class FACTMx_head_GMM(FACTMx_head):
+class FACTMx_head_GMM_masked(FACTMx_head):
   head_type = 'GMM_masked'
 
   def __init__(self,
@@ -201,7 +201,7 @@ class FACTMx_head_GMM(FACTMx_head):
     return config
 
   def from_config(config):
-    return FACTMx_head_GMM(**config)
+    return FACTMx_head_GMM_masked(**config)
 
   def save_weights(self, head_path):
     self.decode_model.save_weights(f'{head_path}_decode_model.weights.h5')
