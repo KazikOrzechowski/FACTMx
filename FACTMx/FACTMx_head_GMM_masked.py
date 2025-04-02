@@ -6,7 +6,7 @@ from FACTMx.FACTMx_head import FACTMx_head
 
 
 class FACTMx_head_GMM(FACTMx_head):
-  head_type = 'GMM'
+  head_type = 'GMM_masked'
 
   def __init__(self,
                dim, dim_latent, dim_normal,
