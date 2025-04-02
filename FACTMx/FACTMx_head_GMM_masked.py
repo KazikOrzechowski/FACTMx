@@ -122,7 +122,9 @@ class FACTMx_head_GMM(FACTMx_head):
     mixtures = self.get_mixture_distributions()
 
     _broadcastable_shape = (-1, tf.shape(data)[1], 1, self.dim_normal)
-    log_likelihoods = mixtures.log_prob(tf.reshape(data, _broadcastable_shape))
+    reshaped_data = tf.reshape(data, _broadcastable_shape)
+    masked_data = reshaped_data + (reshaped_data.numpy() == 0).astype('float16') * mixtures.loc
+    log_likelihoods = mixtures.log_prob(masked_data)
 
     assignment_logits = tf.math.add(log_mixture_probs, log_likelihoods)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
