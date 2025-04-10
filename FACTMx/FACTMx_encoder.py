@@ -4,6 +4,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 try:
+  import tensorflow_model_optimization as tfmot
   from tensorflow_model_optimization.python.core.keras.compat import keras
   _TFMOT_IS_LOADED = True
 except ImportError:
