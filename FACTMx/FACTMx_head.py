@@ -12,30 +12,6 @@ except ImportError:
   import tensorflow.keras as keras
   _TFMOT_IS_LOADED = False
 
-from keras.src import backend
-from keras.src.api_export import keras_export
-
-if backend.backend() == "tensorflow":
-    BackendVariable = backend.tensorflow.core.Variable
-    backend_name_scope = backend.tensorflow.core.name_scope
-elif backend.backend() == "jax":
-    BackendVariable = backend.jax.core.Variable
-    backend_name_scope = backend.common.name_scope.name_scope
-elif backend.backend() == "torch":
-    BackendVariable = backend.torch.core.Variable
-    backend_name_scope = backend.common.name_scope.name_scope
-elif backend.backend() == "numpy":
-    from keras.src.backend.numpy.core import Variable as NumpyVariable
-
-    BackendVariable = NumpyVariable
-    backend_name_scope = backend.common.name_scope.name_scope
-else:
-    raise RuntimeError(f"Invalid backend: {backend.backend()}")
-
-@keras_export("keras.Variable")
-class Variable(BackendVariable):
-    pass
-
 
 from typing import Tuple
 
@@ -86,7 +62,8 @@ class FACTMx_head_Bernoulli(FACTMx_head):
       self.decode_model = keras.Sequential.from_config(decode_config)
 
     if pruning_params is not None and _TFMOT_IS_LOADED:
-      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model, **pruning_params)
+      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model,
+                                                                   pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(pruning_params))
 
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
@@ -165,7 +142,8 @@ class FACTMx_head_Multinomial(FACTMx_head):
       self.decode_model = tf.keras.Sequential.from_config(decode_config)
 
     if pruning_params is not None and _TFMOT_IS_LOADED:
-      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model, **pruning_params)
+      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model,
+                                                                   pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(pruning_params))
 
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
@@ -253,7 +231,8 @@ class FACTMx_head_MultiNormal(FACTMx_head):
 
     loc_pruning = pruning_params.pop('loc', None)
     if loc_pruning is not None and _TFMOT_IS_LOADED:
-      self.layers['loc'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['loc'], **loc_pruning)
+      self.layers['loc'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['loc'],
+                                                                    pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(loc_pruning))
 
         
     scale_config = layer_configs.pop('scale', 'linear')
@@ -269,7 +248,8 @@ class FACTMx_head_MultiNormal(FACTMx_head):
 
     scale_pruning = pruning_params.pop('scale', None)
     if scale_pruning is not None and _TFMOT_IS_LOADED:
-      self.layers['scale'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['scale'], **scale_pruning)
+      self.layers['scale'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['scale'],
+                                                                      pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(scale_pruning))
 
     self.t_vars = tuple(var for layer in self.layers.values() for var in layer.trainable_variables)
 
