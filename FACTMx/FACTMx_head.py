@@ -3,6 +3,15 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+try:
+  import tensorflow_model_optimization as tfmot
+  from tensorflow_model_optimization.python.core.keras.compat import keras
+  _TFMOT_IS_LOADED = True
+except ImportError:
+  warning('TensorFlow Resources Model optimization module not found, weight pruning is disabled.')
+  import tensorflow.keras as keras
+  _TFMOT_IS_LOADED = False
+
 from typing import Tuple
 
 from FACTMx.custom_keras_layers import ConstantResponse
@@ -37,17 +46,22 @@ class FACTMx_head_Bernoulli(FACTMx_head):
                head_name,
                eps=1E-5,
                decode_config='linear',
+               pruning_params=None,
                **kwargs):
     super().__init__(dim, dim_latent, head_name,)
+    self.pruning_params = pruning_params
     self.eps = eps
 
     if decode_config == 'linear':
-      self.decode_model = tf.keras.Sequential(
-                            [tf.keras.Input(shape=(self.dim_latent,)),
-                             tf.keras.layers.Dense(self.dim)]
+      self.decode_model = keras.Sequential(
+                            [keras.Input(shape=(self.dim_latent,)),
+                             keras.layers.Dense(self.dim)]
                           )
     else:
-      self.decode_model = tf.keras.Sequential.from_config(decode_config)
+      self.decode_model = keras.Sequential.from_config(decode_config)
+
+    if pruning_params is not None and _TFMOT_IS_LOADED:
+      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model, **pruning_params)
 
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
@@ -88,6 +102,7 @@ class FACTMx_head_Bernoulli(FACTMx_head):
         'dim': self.dim,
         'dim_latent': self.dim_latent,
         'head_name': self.head_name,
+        'pruning_params': self.pruning_params,
         'decode_config': self.decode_model.get_config()
     }
     return config
@@ -109,9 +124,12 @@ class FACTMx_head_Multinomial(FACTMx_head):
   def __init__(self,
                dim, dim_latent, head_name,
                decode_config='linear',
-               eps = 1E-1, **kwargs):
+               eps = 1E-1, 
+               pruning_params=None,
+               **kwargs):
     super().__init__(dim, dim_latent, head_name)
     self.eps = eps
+    self.pruning_params = pruning_params
 
     if decode_config == 'linear':
       self.decode_model = tf.keras.Sequential(
@@ -120,6 +138,9 @@ class FACTMx_head_Multinomial(FACTMx_head):
                           )
     else:
       self.decode_model = tf.keras.Sequential.from_config(decode_config)
+
+    if pruning_params is not None and _TFMOT_IS_LOADED:
+      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model, **pruning_params)
 
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
@@ -166,6 +187,7 @@ class FACTMx_head_Multinomial(FACTMx_head):
         'dim': self.dim,
         'dim_latent': self.dim_latent,
         'head_name': self.head_name,
+        'pruning_params': self.pruning_params,
         'decode_config': self.decode_model.get_config()
     }
     return config
@@ -186,9 +208,12 @@ class FACTMx_head_MultiNormal(FACTMx_head):
   def __init__(self,
                dim, dim_latent, head_name,
                layer_configs={'loc':'linear', 'scale':'linear'},
-               eps=1E-2, **kwargs):
+               eps=1E-2, 
+               pruning_params={'loc': None, 'scale':None},
+               **kwargs):
     super().__init__(dim, dim_latent, head_name)
     self.eps = eps
+    self.pruning_params = pruning_params
     self.layers = {}
 
     loc_config = layer_configs.pop('loc', 'linear')
@@ -201,6 +226,11 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     else:
       self.layers['loc'] = tf.keras.Sequential.from_config(loc_config)
 
+    loc_pruning = pruning_params.pop('loc', None)
+    if loc_pruning is not None and _TFMOT_IS_LOADED:
+      self.layers['loc'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['loc'], **loc_pruning)
+
+        
     scale_config = layer_configs.pop('scale', 'linear')
     if scale_config == 'linear':
       self.layers['scale'] = tf.keras.Sequential(
@@ -211,6 +241,10 @@ class FACTMx_head_MultiNormal(FACTMx_head):
                              )
     else:
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
+
+    scale_pruning = pruning_params.pop('scale', None)
+    if scale_pruning is not None and _TFMOT_IS_LOADED:
+      self.layers['scale'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['scale'], **scale_pruning)
 
     self.t_vars = tuple(var for layer in self.layers.values() for var in layer.trainable_variables)
 
@@ -254,6 +288,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
                 "dim_latent": self.dim_latent,
                 "head_name": self.head_name,
                 "eps": self.eps,
+                "pruning_params": self.pruning_params,
                 "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()}
              }
     return config
