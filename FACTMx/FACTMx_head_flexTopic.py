@@ -99,7 +99,8 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
 
     decoder_pruning = pruning_params.pop('decoder', None)
     if decoder_pruning is not None and _TFMOT_IS_LOADED:
-      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model, **decoder_pruning)
+      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model,
+                                                                   pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(decoder_pruning))
 
     if encoder_classifier_config == 'linear':
       self.encoder_classifier = tf.keras.Sequential(
@@ -112,7 +113,8 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
 
     encoder_pruning = pruning_params.pop('encoder', None)
     if encoder_pruning is not None and _TFMOT_IS_LOADED:
-      self.encoder_classifier = tfmot.sparsity.keras.prune_low_magnitude(self.encoder_classifier, **encoder_pruning)
+      self.encoder_classifier = tfmot.sparsity.keras.prune_low_magnitude(self.encoder_classifier,
+                                                                         pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(encoder_pruning))
 
     assert self.encoder_classifier.input_shape == (None, None, self.dim_words)
     assert self.encoder_classifier.output_shape == (None, None, self.dim+1)
