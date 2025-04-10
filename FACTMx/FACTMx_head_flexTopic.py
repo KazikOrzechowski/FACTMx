@@ -153,11 +153,11 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
     log_topic_profiles = tf.pad(self.topic_profiles_trainable,
                                 paddings_profiles,
                                 'CONSTANT')
-    log_topic_profiles = tf.keras.activations.log_softmax(log_topic_profiles,
-                                                          axis=0)
+    log_topic_profiles = tf.math.log(
+      tf.keras.activations.softmax(log_topic_profiles, axis=0)
+    )
     return log_topic_profiles
 
-  
   def get_topic_profiles(self):
     return tf.math.exp(self.get_log_topic_profiles())
 
@@ -178,8 +178,9 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
     log_topic_proportions = tf.pad(self.decode_model(latent),
                                    paddings_proportions,
                                    'CONSTANT')
-    log_topic_proportions = tf.keras.activations.log_softmax(log_topic_proportions,
-                                                             axis=-1)
+    log_topic_proportions = tf.math.log(
+      tf.keras.activations.softmax(log_topic_proportions, axis=-1)
+    )
 
     #minimal topic proportions should be around eps
     log_eps = tf.constant(tf.math.log(self.eps), shape=log_topic_proportions.shape)
