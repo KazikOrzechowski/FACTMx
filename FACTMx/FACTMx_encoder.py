@@ -46,7 +46,7 @@ class FACTMx_encoder(tf.Module):
     loc_pruning = pruning_params.pop('loc', None)
     if loc_pruning is not None and _TFMOT_IS_LOADED:
       self.layers['loc'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['loc'],
-                                                                    pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(loc_pruning))
+                                                                    pruning_schedule=tfmot.sparsity.keras.PolynomialDecay.from_config(loc_pruning))
 
     scale_config = layer_configs.pop('scale', 'linear')
     if scale_config == 'linear':
@@ -62,7 +62,7 @@ class FACTMx_encoder(tf.Module):
     scale_pruning = pruning_params.pop('scale', None)
     if scale_pruning is not None and _TFMOT_IS_LOADED:
       self.layers['scale'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['scale'],
-                                                                      pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(scale_pruning))
+                                                                      pruning_schedule=tfmot.sparsity.keras.PolynomialDecay.from_config(scale_pruning))
 
     self.t_vars = tuple(var for layer in self.layers.values() for var in layer.trainable_variables)
 
