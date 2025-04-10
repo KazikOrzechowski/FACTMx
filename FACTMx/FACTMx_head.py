@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import tf_keras as keras
 import tensorflow_probability as tfp
 
 from typing import Tuple
@@ -42,12 +43,12 @@ class FACTMx_head_Bernoulli(FACTMx_head):
     self.eps = eps
 
     if decode_config == 'linear':
-      self.decode_model = tf.keras.Sequential(
-                            [tf.keras.Input(shape=(self.dim_latent,)),
-                             tf.keras.layers.Dense(self.dim)]
+      self.decode_model = keras.Sequential(
+                            [keras.Input(shape=(self.dim_latent,)),
+                             keras.layers.Dense(self.dim)]
                           )
     else:
-      self.decode_model = tf.keras.Sequential.from_config(decode_config)
+      self.decode_model = keras.Sequential.from_config(decode_config)
 
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
@@ -114,12 +115,12 @@ class FACTMx_head_Multinomial(FACTMx_head):
     self.eps = eps
 
     if decode_config == 'linear':
-      self.decode_model = tf.keras.Sequential(
-                            [tf.keras.Input(shape=(self.dim_latent,)),
-                             tf.keras.layers.Dense(self.dim)]
+      self.decode_model = keras.Sequential(
+                            [keras.Input(shape=(self.dim_latent,)),
+                             keras.layers.Dense(self.dim)]
                           )
     else:
-      self.decode_model = tf.keras.Sequential.from_config(decode_config)
+      self.decode_model = keras.Sequential.from_config(decode_config)
 
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
@@ -193,24 +194,24 @@ class FACTMx_head_MultiNormal(FACTMx_head):
 
     loc_config = layer_configs.pop('loc', 'linear')
     if loc_config == 'linear':
-      self.layers['loc'] = tf.keras.Sequential(
-                              [tf.keras.Input(shape=(self.dim_latent,)),
-                               tf.keras.layers.Dense(units=self.dim,
-                                                     kernel_initializer='orthogonal')]
+      self.layers['loc'] = keras.Sequential(
+                              [keras.Input(shape=(self.dim_latent,)),
+                               keras.layers.Dense(units=self.dim,
+                                                  kernel_initializer='orthogonal')]
                            )
     else:
-      self.layers['loc'] = tf.keras.Sequential.from_config(loc_config)
+      self.layers['loc'] = keras.Sequential.from_config(loc_config)
 
     scale_config = layer_configs.pop('scale', 'linear')
     if scale_config == 'linear':
-      self.layers['scale'] = tf.keras.Sequential(
-                              [tf.keras.Input(shape=(self.dim_latent,)),
+      self.layers['scale'] = keras.Sequential(
+                              [keras.Input(shape=(self.dim_latent,)),
                                ConstantResponse(units=self.dim,
                                                 activation='relu',
                                                 bias_initializer='zeros')]
                              )
     else:
-      self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
+      self.layers['scale'] = keras.Sequential.from_config(scale_config)
 
     self.t_vars = tuple(var for layer in self.layers.values() for var in layer.trainable_variables)
 
