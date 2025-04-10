@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import tf_keras as keras
 import tensorflow_probability as tfp
 
 from typing import Tuple, Dict
@@ -24,24 +25,24 @@ class FACTMx_encoder(tf.Module):
 
     loc_config = layer_configs.pop('loc', 'linear')
     if loc_config == 'linear':
-      self.layers['loc'] = tf.keras.Sequential(
-                              [tf.keras.Input(shape=(sum(head_dims),)),
-                               tf.keras.layers.Dense(units=dim_latent,
-                                                     kernel_initializer='orthogonal')]
+      self.layers['loc'] = keras.Sequential(
+                              [keras.Input(shape=(sum(head_dims),)),
+                               keras.layers.Dense(units=dim_latent,
+                                                  kernel_initializer='orthogonal')]
       )
     else:
-      self.layers['loc'] = tf.keras.Sequential.from_config(loc_config)
+      self.layers['loc'] = keras.Sequential.from_config(loc_config)
 
     scale_config = layer_configs.pop('scale', 'linear')
     if scale_config == 'linear':
-      self.layers['scale'] = tf.keras.Sequential(
-                              [tf.keras.Input(shape=(sum(head_dims),)),
+      self.layers['scale'] = keras.Sequential(
+                              [keras.Input(shape=(sum(head_dims),)),
                                ConstantResponse(units=dim_latent,
                                                 activation='relu',
                                                 bias_initializer='zeros')]
       )
     else:
-      self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
+      self.layers['scale'] = keras.Sequential.from_config(scale_config)
 
     self.t_vars = tuple(var for layer in self.layers.values() for var in layer.trainable_variables)
 
