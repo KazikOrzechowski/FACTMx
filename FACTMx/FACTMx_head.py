@@ -63,7 +63,7 @@ class FACTMx_head_Bernoulli(FACTMx_head):
 
     if pruning_params is not None and _TFMOT_IS_LOADED:
       self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model,
-                                                                   pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(pruning_params))
+                                                                   pruning_schedule=tfmot.sparsity.keras.PolynomialDecay.from_config(pruning_params))
 
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
@@ -143,7 +143,7 @@ class FACTMx_head_Multinomial(FACTMx_head):
 
     if pruning_params is not None and _TFMOT_IS_LOADED:
       self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model,
-                                                                   pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(pruning_params))
+                                                                   pruning_schedule=tfmot.sparsity.keras.PolynomialDecay.from_config(pruning_params))
 
     assert self.decode_model.output_shape == (None, self.dim)
     assert self.decode_model.input_shape == (None, self.dim_latent)
@@ -232,7 +232,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     loc_pruning = pruning_params.pop('loc', None)
     if loc_pruning is not None and _TFMOT_IS_LOADED:
       self.layers['loc'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['loc'],
-                                                                    pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(loc_pruning))
+                                                                    pruning_schedule=tfmot.sparsity.keras.PolynomialDecay.from_config(loc_pruning))
 
         
     scale_config = layer_configs.pop('scale', 'linear')
@@ -249,7 +249,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     scale_pruning = pruning_params.pop('scale', None)
     if scale_pruning is not None and _TFMOT_IS_LOADED:
       self.layers['scale'] = tfmot.sparsity.keras.prune_low_magnitude(self.layers['scale'],
-                                                                      pruning_schedule=tfmot.sparsity.keras.PruningSchedule.from_config(scale_pruning))
+                                                                      pruning_schedule=tfmot.sparsity.keras.PolynomialDecay.from_config(scale_pruning))
 
     self.t_vars = tuple(var for layer in self.layers.values() for var in layer.trainable_variables)
 
