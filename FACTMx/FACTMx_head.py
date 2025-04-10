@@ -12,6 +12,31 @@ except ImportError:
   import tensorflow.keras as keras
   _TFMOT_IS_LOADED = False
 
+from keras.src import backend
+from keras.src.api_export import keras_export
+
+if backend.backend() == "tensorflow":
+    BackendVariable = backend.tensorflow.core.Variable
+    backend_name_scope = backend.tensorflow.core.name_scope
+elif backend.backend() == "jax":
+    BackendVariable = backend.jax.core.Variable
+    backend_name_scope = backend.common.name_scope.name_scope
+elif backend.backend() == "torch":
+    BackendVariable = backend.torch.core.Variable
+    backend_name_scope = backend.common.name_scope.name_scope
+elif backend.backend() == "numpy":
+    from keras.src.backend.numpy.core import Variable as NumpyVariable
+
+    BackendVariable = NumpyVariable
+    backend_name_scope = backend.common.name_scope.name_scope
+else:
+    raise RuntimeError(f"Invalid backend: {backend.backend()}")
+
+@keras_export("keras.Variable")
+class Variable(BackendVariable):
+    pass
+
+
 from typing import Tuple
 
 from FACTMx.custom_keras_layers import ConstantResponse
