@@ -32,6 +32,7 @@ class FACTMx_model(tf.Module):
     self.heads = [FACTMx_head.factory(**head_kwargs, dim_latent=self.dim_latent) for head_kwargs in heads_config]
     self.head_dims = [head.dim for head in self.heads]
     self.loss_scales = tf.ones((1+len(self.heads),)) if loss_scales is None else tf.constant(loss_scales)
+    self.prunable_layers = None #handled by pruning module
 
     if encoder_config is None:
       self.encoder = FACTMx_encoder(dim_latent, self.head_dims,
