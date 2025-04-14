@@ -19,7 +19,7 @@ class FACTMx_head_GMM(FACTMx_head):
   def __init__(self,
                dim, dim_latent, dim_normal,
                head_name,
-               layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'}
+               layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
                mixture_params={'loc': 'random', 'log_cov_diag': 0., 'cov_perturb_factor': None},
                temperature=1E-4, 
                eps=1E-3, 
