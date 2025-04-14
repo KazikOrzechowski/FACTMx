@@ -201,7 +201,6 @@ class FACTMx_head_MultiNormal(FACTMx_head):
                **kwargs):
     super().__init__(dim, dim_latent, head_name)
     self.eps = eps
-    self.pruning_params = pruning_params
     self.layers = {}
 
     loc_config = layer_configs.pop('loc', 'linear')
