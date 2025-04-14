@@ -25,7 +25,6 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
                eps=1E-3, 
                max_n_perturb_factor=2,
                l1_scale=0.1,
-               pruning_params={'encoder':None, 'decoder':None},
                regularise_orthogonal=True):
     super().__init__(dim, dim_latent, head_name)
     self.dim_normal = dim_normal
@@ -33,7 +32,6 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
     self.eps = eps
     self.n_cov_perturb_factor = min(dim_normal, max_n_perturb_factor)
     self.l1_scale = l1_scale
-    self.pruning_params = pruning_params
     self.regularise_orthogonal = regularise_orthogonal
 
     if decode_mixture_config == 'linear':
@@ -44,10 +42,6 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
                                   )
     else:
       self.decode_mixture_model = tf.keras.Sequential.from_config(decode_mixture_config)
-
-    decoder_pruning = pruning_params.pop('decoder', None)
-    if decoder_pruning is not None and _TFMOT_IS_LOADED:
-      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model, **decoder_pruning)
 
     assert self.decode_mixture_model.input_shape == (None, self.dim_latent)
     assert self.decode_mixture_model.output_shape == (None, self.dim)
@@ -61,10 +55,6 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
     else:
       self.encoder_classifier = tf.keras.Sequential.from_config(encoder_classifier_config)
 
-    encoder_pruning = pruning_params.pop('encoder', None)
-    if encoder_pruning is not None and _TFMOT_IS_LOADED:
-      self.encoder_classifier = tfmot.sparsity.keras.prune_low_magnitude(self.encoder_classifier, **encoder_pruning)
-                 
     assert self.encoder_classifier.input_shape == (None, None, self.dim_normal)
     assert self.encoder_classifier.output_shape == (None, None, self.dim+1)
 
@@ -227,7 +217,6 @@ class FACTMx_head_GMM_linearMod(FACTMx_head):
         'head_type':self.head_type,
         'temperature':self.temperature,
         'max_n_perturb_factor':self.n_cov_perturb_factor,
-        'pruning_params':self.pruning_params,
         'mixture_params':{
             'loc':self.mixture_locs.numpy().tolist(),
             'linear_mod':self.linear_mixture_modification.numpy().tolist(),
