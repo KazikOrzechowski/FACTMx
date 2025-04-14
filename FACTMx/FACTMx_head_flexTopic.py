@@ -72,7 +72,6 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
                topic_L2_penalty=None,
                proportions_L2_penalty=None,
                prop_loss_scale=1.,
-               pruning_params={'encoder':None, 'decoder':None},
                eps=1E-3,
                temperature=1E-4):
     super().__init__(dim, dim_latent, head_name)
@@ -82,7 +81,6 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
     self.topic_L2_penalty = topic_L2_penalty
     self.proportions_L2_penalty = proportions_L2_penalty
     self.prop_loss_scale = prop_loss_scale
-    self.pruning_params = pruning_params
     self.temperature = temperature
 
     if decode_config == 'linear':
@@ -97,11 +95,6 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
     assert self.decode_model.input_shape == (None, self.dim_latent)
     assert self.decode_model.output_shape == (None, self.dim)
 
-    decoder_pruning = pruning_params.pop('decoder', None)
-    if decoder_pruning is not None and _TFMOT_IS_LOADED:
-      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model,
-                                                                   pruning_schedule=tfmot.sparsity.keras.PolynomialDecay.from_config(decoder_pruning))
-
     if encoder_classifier_config == 'linear':
       self.encoder_classifier = tf.keras.Sequential(
                                   [tf.keras.Input(shape=(None, self.dim_words)), 
@@ -110,11 +103,6 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
                                 )
     else:
       self.encoder_classifier = tf.keras.Sequential.from_config(encoder_classifier_config)
-
-    encoder_pruning = pruning_params.pop('encoder', None)
-    if encoder_pruning is not None and _TFMOT_IS_LOADED:
-      self.encoder_classifier = tfmot.sparsity.keras.prune_low_magnitude(self.encoder_classifier,
-                                                                         pruning_schedule=tfmot.sparsity.keras.PolynomialDecay.from_config(encoder_pruning))
 
     assert self.encoder_classifier.input_shape == (None, None, self.dim_words)
     assert self.encoder_classifier.output_shape == (None, None, self.dim+1)
@@ -266,7 +254,6 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
         'temperature':self.temperature,
         'eps':self.eps,
         'prop_loss_scale':self.prop_loss_scale,
-        'pruning_params':self.pruning_params,
         'topic_profiles':self.topic_profiles_trainable.numpy().tolist(),
         'topic_L2_penalty':self.topic_L2_penalty,
         'proportions_L2_penalty':self.proportions_L2_penalty,
