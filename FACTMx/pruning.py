@@ -12,9 +12,9 @@ def wrap_model(model, pruning_params):
   pruning_schedule = tfmot.sparsity.keras.PolynomialDecay(**pruning_params)
   
   #wrap encoder
-  for key, layer in model.encoder.layers.items():
-    model.encoder.layers[key] = tfmot.sparsity.keras.prune_low_magnitude(layer, pruning_schedule)
-    model.layers.append(model.encoder.layers[key])
+  #for key, layer in model.encoder.layers.items():
+  #  model.encoder.layers[key] = tfmot.sparsity.keras.prune_low_magnitude(layer, pruning_schedule)
+  #  model.layers.append(model.encoder.layers[key])
 
   #wrap heads
   for i, head in enumerate(model.heads):
@@ -27,8 +27,8 @@ def unwrap_model(model):
   model.layers = None
 
   #unwrap encoder
-  for key, layer in model.encoder.layers.items():
-    model.encoder.layers[key] = tfmot.sparsity.keras.strip_pruning(layer)
+  #for key, layer in model.encoder.layers.items():
+  #  model.encoder.layers[key] = tfmot.sparsity.keras.strip_pruning(layer)
 
   #wrap heads
   for i, head in enumerate(model.heads):
