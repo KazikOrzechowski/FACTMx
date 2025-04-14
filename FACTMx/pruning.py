@@ -14,7 +14,7 @@ def wrap_model(model, pruning_params):
   #wrap encoder
   for key, layer in model.encoder.layers.items():
     model.encoder.layers[key] = tfmot.sparsity.keras.prune_low_magnitude(layer, pruning_schedule)
-    model.prunable_layers.append(self.encoder.layers[key])
+    model.prunable_layers.append(model.encoder.layers[key])
 
   #wrap heads
   for i, head in enumerate(model.heads):
