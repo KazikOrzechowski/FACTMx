@@ -8,23 +8,23 @@ from tensorflow_model_optimization.python.core.keras.compat import keras
 
 
 def wrap_model(model, pruning_params):
-  model.prunable_layers = []
+  model.layers = []
   pruning_schedule = tfmot.sparsity.keras.PolynomialDecay(**pruning_params)
   
   #wrap encoder
   for key, layer in model.encoder.layers.items():
     model.encoder.layers[key] = tfmot.sparsity.keras.prune_low_magnitude(layer, pruning_schedule)
-    model.prunable_layers.append(model.encoder.layers[key])
+    model.layers.append(model.encoder.layers[key])
 
   #wrap heads
   for i, head in enumerate(model.heads):
     for key, layer in head.layers.items():
       model.heads[i].layers[key] = tfmot.sparsity.keras.prune_low_magnitude(layer, pruning_schedule)
-      model.prunable_layers.append(model.heads[i].layers[key])
+      model.layers.append(model.heads[i].layers[key])
 
 
 def unwrap_model(model):
-  model.prunable_layers = None
+  model.layers = None
 
   #unwrap encoder
   for key, layer in model.encoder.layers.items():
