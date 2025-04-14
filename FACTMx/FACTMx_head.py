@@ -21,17 +21,27 @@ class FACTMx_head(tf.Module):
   dim: int
   dim_latent: int
   head_name: str
+  layers: dict
 
   def __init__(self, dim, dim_latent, head_name):
     self.dim = dim
     self.dim_latent = dim_latent
     self.head_name = head_name
+    self.layers = {}
 
   def encode(self, data):
     pass
 
   def decode(self, latent, data):
     pass
+
+  def save_weights(self, head_path):
+    for key, layer in self.layers.items():
+      layer.save_weights(f'{head_path}_{key}.weights.h5')
+
+  def load_weights(self, head_path):
+    for key, layer in self.layers.items():
+      layer.load_weights(f'{head_path}_{key}.weights.h5')
 
   def factory(head_type, **kwargs):
     FACTMx_head_map = {head.head_type: head for head in FACTMx_head.__subclasses__()}
@@ -46,29 +56,29 @@ class FACTMx_head_Bernoulli(FACTMx_head):
                dim_latent,
                head_name,
                eps=1E-5,
-               decode_config='linear',
+               layer_configs={'logits':'linear'},
                **kwargs):
     super().__init__(dim, dim_latent, head_name,)
-    self.pruning_params = pruning_params
     self.eps = eps
 
-    if decode_config == 'linear':
-      self.decode_model = keras.Sequential(
-                            [keras.Input(shape=(self.dim_latent,)),
-                             keras.layers.Dense(self.dim)]
-                          )
+    logits_config = layer_configs.pop('logits', 'linear')
+    if logits_config == 'linear':
+      self.layers['logits'] = keras.Sequential(
+                                               [keras.Input(shape=(self.dim_latent,)),
+                                                keras.layers.Dense(self.dim)]
+                                            )
     else:
-      self.decode_model = keras.Sequential.from_config(decode_config)
+      self.layers['logits'] = keras.Sequential.from_config(logits_config)
 
-    assert self.decode_model.output_shape == (None, self.dim)
-    assert self.decode_model.input_shape == (None, self.dim_latent)
+    assert self.layers['logits'].output_shape == (None, self.dim)
+    assert self.layers['logits'].input_shape == (None, self.dim_latent)
 
-    self.t_vars = self.decode_model.trainable_variables
+    self.t_vars = self.layers['logits'].trainable_variables
 
 
   def decode_params(self, latent):
     #decode logits from a latent point
-    return self.decode_model(latent)
+    return self.layers['logits'](latent)
 
   def make_decoder(self, latent):
     #return the decoding distribution given its latent point
@@ -89,7 +99,7 @@ class FACTMx_head_Bernoulli(FACTMx_head):
     log_prob = self.make_decoder(latent).log_prob(data)
 
     loss = -tf.reduce_mean(log_prob)
-    loss += tf.reduce_sum(self.decode_model.losses)
+    loss += tf.reduce_sum(self.layers['logits'].losses)
 
     return loss
 
@@ -99,18 +109,12 @@ class FACTMx_head_Bernoulli(FACTMx_head):
         'dim': self.dim,
         'dim_latent': self.dim_latent,
         'head_name': self.head_name,
-        'decode_config': self.decode_model.get_config()
+        'layer_configs': {'logits': self.layers['logits'].get_config()}
     }
     return config
 
   def from_config(config):
     return FACTMx_head_Bernoulli(**config)
-
-  def save_weights(self, head_path):
-    self.decode_model.save_weights(f'{head_path}.weights.h5')
-
-  def load_weights(self, head_path):
-    self.decode_model.load_weights(f'{head_path}.weights.h5')
 
 
 
@@ -119,33 +123,29 @@ class FACTMx_head_Multinomial(FACTMx_head):
 
   def __init__(self,
                dim, dim_latent, head_name,
-               decode_config='linear',
-               eps = 1E-1, 
+               layer_configs={'logits':'linear'},
+               eps = 1E-3, 
                **kwargs):
     super().__init__(dim, dim_latent, head_name)
     self.eps = eps
 
-    if decode_config == 'linear':
-      self.decode_model = tf.keras.Sequential(
+    logits_config = layer_configs.pop('logits', 'linear')             
+    if logits_config == 'linear':
+      self.layers['logits'] = tf.keras.Sequential(
                             [tf.keras.Input(shape=(self.dim_latent,)),
                              tf.keras.layers.Dense(self.dim)]
                           )
     else:
-      self.decode_model = tf.keras.Sequential.from_config(decode_config)
+      self.layers['logits'] = tf.keras.Sequential.from_config(logits_config)
 
-    if pruning_params is not None and _TFMOT_IS_LOADED:
-      self.decode_model = tfmot.sparsity.keras.prune_low_magnitude(self.decode_model,
-                                                                   pruning_schedule=tfmot.sparsity.keras.PolynomialDecay.from_config(pruning_params))
+    assert self.layers['logits'].output_shape == (None, self.dim)
+    assert self.layers['logits'].input_shape == (None, self.dim_latent)
 
-    assert self.decode_model.output_shape == (None, self.dim)
-    assert self.decode_model.input_shape == (None, self.dim_latent)
-
-    self.t_vars = self.decode_layer.trainable_variables
-
+    self.t_vars = self.layers['logits'].trainable_variables
 
   def decode_params(self, latent):
     #decode logits from a latent point
-    return self.decode_model(latent)
+    return self.layers['logits'](latent)
 
   def make_decoder(self, latent, counts):
     #return the decoding distribution given its latent point
@@ -172,7 +172,7 @@ class FACTMx_head_Multinomial(FACTMx_head):
     log_prob = self.make_decoder(latent, counts).log_prob(observations)
 
     loss = -tf.reduce_mean(log_prob)
-    loss += tf.reduce_sum(self.decode_model.losses)
+    loss += tf.reduce_sum(self.layers['logits'].losses)
 
     return loss 
 
@@ -182,18 +182,13 @@ class FACTMx_head_Multinomial(FACTMx_head):
         'dim': self.dim,
         'dim_latent': self.dim_latent,
         'head_name': self.head_name,
-        'decode_config': self.decode_model.get_config()
+        'layer_configs': {'logits': self.layers['logits'].get_config()}
     }
     return config
 
   def from_config(config):
     return FACTMx_head_Multinomial(**config)
 
-  def save_weights(self, head_path):
-    self.decode_model.save_weights(f'{head_path}.weights.h5')
-
-  def load_weights(self, head_path):
-    self.decode_model.load_weights(f'{head_path}.weights.h5')
 
 
 class FACTMx_head_MultiNormal(FACTMx_head):
@@ -231,7 +226,6 @@ class FACTMx_head_MultiNormal(FACTMx_head):
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
 
     self.t_vars = tuple(var for layer in self.layers.values() for var in layer.trainable_variables)
-
 
   def decode_params(self, latent):
     #decode loc and cov from a latent point
@@ -279,10 +273,4 @@ class FACTMx_head_MultiNormal(FACTMx_head):
   def from_config(config):
     return FACTMx_head_MultiNormal(**config)
 
-  def save_weights(self, head_path):
-    for key, layer in self.layers.items():
-      layer.save_weights(f'{head_path}_{key}.weights.h5')
-
-  def load_weights(self, head_path):
-    for key, layer in self.layers.items():
-      layer.load_weights(f'{head_path}_{key}.weights.h5')
+  
