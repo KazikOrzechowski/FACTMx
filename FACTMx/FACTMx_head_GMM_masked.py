@@ -117,7 +117,7 @@ class FACTMx_head_GMM_masked(FACTMx_head):
 
   def decode_log_mixture_probs(self, latent):
     paddings_probs = tf.constant([[0, 0], [1, 0]])
-    log_mixture_probs = tf.pad(self.decode_model(latent),
+    log_mixture_probs = tf.pad(self.layers['mixture_logits'](latent),
                                 paddings_probs,
                                 'CONSTANT')
     log_mixture_probs = tf.math.log(
@@ -179,11 +179,11 @@ class FACTMx_head_GMM_masked(FACTMx_head):
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size,
                           -log_likelihood/batch_size,
                           mixture_params_penalty,
-                          *self.decode_model.losses])
+                          *self..layers['mixture_logits'].losses])
 
 
   def encode(self, data):
-    assignment_logits = self.encoder_classifier(data)
+    assignment_logits = self.layers['encoder_classifier'](data)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
