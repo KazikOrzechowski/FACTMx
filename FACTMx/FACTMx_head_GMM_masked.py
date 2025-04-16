@@ -179,7 +179,7 @@ class FACTMx_head_GMM_masked(FACTMx_head):
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size,
                           -log_likelihood/batch_size,
                           mixture_params_penalty,
-                          *self..layers['mixture_logits'].losses])
+                          *self.layers['mixture_logits'].losses])
 
 
   def encode(self, data):
