@@ -2,6 +2,14 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import numpy as np
 
+try:
+  import tensorflow_model_optimization as tfmot
+  from tensorflow_model_optimization.python.core.keras.compat import keras
+  _TFMOT_IS_LOADED = True
+except ImportError:
+  import tensorflow.keras as keras
+  _TFMOT_IS_LOADED = False
+
 from FACTMx.FACTMx_head import FACTMx_head
 
 
@@ -11,8 +19,7 @@ class FACTMx_head_GMM_masked(FACTMx_head):
   def __init__(self,
                dim, dim_latent, dim_normal,
                head_name,
-               decode_mixture_config='linear',
-               encoder_classifier_config='linear',
+               layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
                mixture_params={'loc': 'random', 'log_cov_diag': 0., 'cov_perturb_factor': None},
                temperature=1E-4, 
                eps=1E-3, 
@@ -29,45 +36,50 @@ class FACTMx_head_GMM_masked(FACTMx_head):
     self.prop_loss_scale = prop_loss_scale
     self.regularise_orthogonal = regularise_orthogonal
 
-    if decode_mixture_config == 'linear':
-      self.decode_model = tf.keras.Sequential(
-                            [tf.keras.Input(shape=(self.dim_latent,)),
-                             tf.keras.layers.Dense(units=self.dim,
-                                                   kernel_initializer='orthogonal')]
-                          )
+    # >>> initialise layers >>>
+    mixture_logits_config = layer_configs.pop('mixture_logits', 'linear')
+    if mixture_logits_config == 'linear':
+      self.layers['mixture_logits'] = tf.keras.Sequential(
+                                        [tf.keras.Input(shape=(self.dim_latent,)),
+                                         tf.keras.layers.Dense(units=self.dim,
+                                                               kernel_initializer='orthogonal')]
+                                      )
     else:
-      self.decode_model = tf.keras.Sequential.from_config(decode_mixture_config)
+      self.layers['mixture_logits'] = tf.keras.Sequential.from_config(mixture_logits_config)
 
-    assert self.decode_model.output_shape == (None, self.dim)
-    assert self.decode_model.input_shape == (None, self.dim_latent)
+    assert self.layers['mixture_logits'].output_shape == (None, self.dim)
+    assert self.layers['mixture_logits'].input_shape == (None, self.dim_latent)
 
+    encoder_classifier_config = layer_configs.pop('encoder_classifier', 'linear')
     if encoder_classifier_config == 'linear':
-      self.encoder_classifier = tf.keras.Sequential(
-                                  [tf.keras.Input(shape=(None, self.dim_normal)),
-                                   tf.keras.layers.Dense(units=self.dim+1,
-                                                         activation='log_softmax')]
-                                )
+      self.layers['encoder_classifier'] = tf.keras.Sequential(
+                                            [tf.keras.Input(shape=(None, self.dim_normal)),
+                                             tf.keras.layers.Dense(units=self.dim+1,
+                                                                   activation='log_softmax')]
+                                          )
     else:
-      self.encoder_classifier = tf.keras.Sequential.from_config(encoder_classifier_config)
+      self.layers['encoder_classifier'] = tf.keras.Sequential.from_config(encoder_classifier_config)
 
-    assert self.encoder_classifier.input_shape == (None, None, self.dim_normal)
-    assert self.encoder_classifier.output_shape == (None, None, self.dim+1)
+    assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_normal)
+    assert self.layers['encoder_classifier'].output_shape == (None, None, self.dim+1)
+    # <<< initialise layers <<<
 
+    # >>> initialise mixtures >>>
     mixture_locs = mixture_params.pop('loc', 'random')
     if mixture_locs == 'random':
       mixture_locs = tf.keras.initializers.Orthogonal()(shape=(dim+1, dim_normal))
 
-    self.mixture_locs = tf.keras.Variable(mixture_locs,
-                                          trainable=True,
-                                          dtype=tf.float32)
+    self.mixture_locs = tf.Variable(mixture_locs,
+                                    trainable=True,
+                                    dtype=tf.float32)
 
     mixture_log_covs = mixture_params.pop('log_cov_diag', 0.)
     if isinstance(mixture_log_covs, float):
       mixture_log_covs = mixture_log_covs + tf.keras.initializers.Zeros()(shape=(dim+1, dim_normal))
     
-    self.mixture_log_covs = tf.keras.Variable(mixture_log_covs,
-                                              trainable=True,
-                                              dtype=tf.float32)
+    self.mixture_log_covs = tf.Variable(mixture_log_covs,
+                                        trainable=True,
+                                        dtype=tf.float32)
 
     mixture_cov_perturb = mixture_params.pop('cov_perturb_factor', None)
     if mixture_cov_perturb is None:
@@ -77,12 +89,14 @@ class FACTMx_head_GMM_masked(FACTMx_head):
       _cov_perturb_shape = (dim+1, dim_normal, self.n_cov_perturb_factor)
       mixture_cov_perturb = tf.keras.initializers.Orthogonal()(shape=_cov_perturb_shape)
 
-    self.mixture_cov_perturb = tf.keras.Variable(mixture_cov_perturb,
-                                                 trainable=True,
-                                                 dtype=tf.float32)
+    self.mixture_cov_perturb = tf.Variable(mixture_cov_perturb,
+                                           trainable=True,
+                                           dtype=tf.float32)
+    # <<< initialise mixtures <<<
 
-    self.t_vars = [*self.decode_model.trainable_variables,
-                   *self.encoder_classifier.trainable_variables,
+    # get training variables
+    self.t_vars = [*self.layers['mixture_logits'].trainable_variables,
+                   *self.layers['encoder_classifier'].trainable_variables,
                    self.mixture_locs,
                    self.mixture_log_covs,
                    self.mixture_cov_perturb]
@@ -106,8 +120,9 @@ class FACTMx_head_GMM_masked(FACTMx_head):
     log_mixture_probs = tf.pad(self.decode_model(latent),
                                 paddings_probs,
                                 'CONSTANT')
-    log_mixture_probs = tf.keras.activations.log_softmax(log_mixture_probs,
-                                                          axis=-1)
+    log_mixture_probs = tf.math.log(
+      tf.keras.activations.softmax(log_mixture_probs, axis=-1)
+    )
     
     # minimum topic proportion is EPS
     log_eps = tf.constant(tf.math.log(self.eps), shape=log_mixture_probs.shape)
@@ -195,18 +210,9 @@ class FACTMx_head_GMM_masked(FACTMx_head):
             'log_cov_diag':self.mixture_log_covs.numpy().tolist(),
             'cov_perturb_factor':self.mixture_cov_perturb.numpy().tolist()
         },
-        'encoder_classifier_config':self.encoder_classifier.get_config(),
-        'decode_mixture_config':self.decode_model.get_config()
+        'layer_configs': {key: layer.get_config() for key, layer in self.layers.items()},
     }
     return config
 
   def from_config(config):
     return FACTMx_head_GMM_masked(**config)
-
-  def save_weights(self, head_path):
-    self.decode_model.save_weights(f'{head_path}_decode_model.weights.h5')
-    self.encoder_classifier.save_weights(f'{head_path}_encoder_classifier.weights.h5')
-
-  def load_weights(self, head_path):
-    self.decode_model.load_weights(f'{head_path}_decode_model.weights.h5')
-    self.encoder_classifier.load_weights(f'{head_path}_encoder_classifier.weights.h5')
