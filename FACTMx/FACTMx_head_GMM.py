@@ -118,7 +118,7 @@ class FACTMx_head_GMM(FACTMx_head):
 
   def decode_log_mixture_probs(self, latent):
     paddings_probs = tf.constant([[0, 0], [1, 0]])
-    log_mixture_probs = tf.pad(self.layers['mixture_logits'],
+    log_mixture_probs = tf.pad(self.layers['mixture_logits'](latent),
                                 paddings_probs,
                                 'CONSTANT')
     log_mixture_probs = tf.keras.activations.log_softmax(log_mixture_probs,
