@@ -121,8 +121,7 @@ class FACTMx_head_GMM(FACTMx_head):
     log_mixture_probs = tf.pad(self.layers['mixture_logits'](latent),
                                 paddings_probs,
                                 'CONSTANT')
-    log_mixture_probs = tf.keras.activations.log_softmax(log_mixture_probs,
-                                                          axis=-1)
+    log_mixture_probs = tf.math.log(tf.keras.activations.softmax(log_mixture_probs, axis=-1))
     
     # minimum topic proportion is EPS
     log_eps = tf.constant(tf.math.log(self.eps), shape=log_mixture_probs.shape)
