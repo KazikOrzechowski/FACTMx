@@ -159,7 +159,8 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
         #axis=2
     )
     #log_likelihood = tf.reduce_sum(log_likelihood)
-
+              
+    batch_size = data.shape[0]
 
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size,
                           -log_likelihood/batch_size,
