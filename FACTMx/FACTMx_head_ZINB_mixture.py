@@ -80,9 +80,9 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
     if inflated_loc_logits is None:
       inflated_loc_logits = tf.keras.initializers.Zeros()(shape=(dim+1, dim_counts))
 
-    self.logits = tf.Variable(inflated_loc_logits,
-                              trainable=True,
-                              dtype=tf.float32)
+    self.inflated_loc_logits = tf.Variable(inflated_loc_logits,
+                                           trainable=True,
+                                           dtype=tf.float32)
     # <<< initialise mixtures <<<
 
     # get training variables
