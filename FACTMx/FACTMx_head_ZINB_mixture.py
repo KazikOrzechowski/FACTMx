@@ -190,7 +190,7 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
         'head_name':self.head_name,
         'head_type':self.head_type,
         'temperature':self.temperature,
-        'max_n_perturb_factor':self.n_cov_perturb_factor,
+        'prop_loss_scale':self.prop_loss_scale,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
         'mixture_params':{
             'logits':self.logits.numpy().tolist(),
