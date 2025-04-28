@@ -81,8 +81,8 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
       inflated_loc_logits = tf.keras.initializers.Zeros()(shape=(dim+1, dim_counts))
 
     self.inflated_loc_logits = tf.Variable(inflated_loc_logits,
-                              trainable=True,
-                              dtype=tf.float32)
+                                           trainable=True,
+                                           dtype=tf.float32)
     # <<< initialise mixtures <<<
 
     # get training variables
@@ -98,10 +98,12 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
 
 
   def get_mixture_distributions(self):
+    inflated_loc_probs = tf.math.sigmoid(self.inflated_loc_logits) * (1-2*self.eps) + self.eps
+    
     return tfp.distributions.ZeroInflatedNegativeBinomial(
         logits=self.logits,
         total_count=tf.math.exp(self.log_total_count) + self.eps,
-        inflated_loc_logits=self.inflated_loc_logits,
+        inflated_loc_probs=inflated_loc_probs,
         require_integer_total_count=False,
     )
 
