@@ -21,8 +21,8 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
                head_name,
                layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
                mixture_params={'logits':None, 'log_total_count':None, 'inflated_loc_logits':None},
-               temperature=1E-4, 
-               eps=1E-3, 
+               temperature=1E-4,
+               eps=1E-3,
                prop_loss_scale=1.):
     super().__init__(dim, dim_latent, head_name)
 
@@ -71,7 +71,7 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
     log_total_count = mixture_params.pop('log_total_count', None)
     if log_total_count is None:
       log_total_count = tf.keras.initializers.Zeros()(shape=(dim+1, dim_counts))
-    
+
     self.log_total_count = tf.Variable(log_total_count,
                                        trainable=True,
                                        dtype=tf.float32)
@@ -81,8 +81,8 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
       inflated_loc_logits = tf.keras.initializers.Zeros()(shape=(dim+1, dim_counts))
 
     self.inflated_loc_logits = tf.Variable(inflated_loc_logits,
-                                           trainable=True,
-                                           dtype=tf.float32)
+                              trainable=True,
+                              dtype=tf.float32)
     # <<< initialise mixtures <<<
 
     # get training variables
@@ -116,7 +116,7 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
                                 paddings_probs,
                                 'CONSTANT')
     log_mixture_probs = tf.math.log(tf.keras.activations.softmax(log_mixture_probs, axis=-1))
-    
+
     # minimum topic proportion is EPS
     log_eps = tf.constant(tf.math.log(self.eps), shape=log_mixture_probs.shape)
     return tf.reduce_logsumexp(tf.stack([log_mixture_probs, log_eps]), axis=0)
@@ -131,6 +131,7 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
 
     _broadcastable_shape = (-1, tf.shape(data)[1], 1, self.dim_counts)
     log_likelihoods = mixtures.log_prob(tf.reshape(data, _broadcastable_shape))
+    log_likelihoods = tf.reduce_sum(log_likelihoods, axis=-1)
 
     assignment_logits = tf.math.add(log_mixture_probs, log_likelihoods)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
@@ -159,7 +160,6 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
         #axis=2
     )
     #log_likelihood = tf.reduce_sum(log_likelihood)
-              
     batch_size = data.shape[0]
 
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size,
@@ -186,7 +186,7 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
     config = {
         'dim':self.dim,
         'dim_latent':self.dim_latent,
-        'dim_normal':self.dim_normal,
+        'dim_counts':self.dim_counts,
         'head_name':self.head_name,
         'head_type':self.head_type,
         'temperature':self.temperature,
