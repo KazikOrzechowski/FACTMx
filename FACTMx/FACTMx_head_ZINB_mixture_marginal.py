@@ -151,7 +151,7 @@ class FACTMx_head_ZINB_mixture_marginal(FACTMx_head):
           tfp.distributions.Categorical(logits=encoder_assignment_logits).entropy()
     )
 
-    log_likelihood = tf.reduce_sum(assignment_logits)
+    log_likelihood = tf.reduce_sum(assignment_logits * encoder_assignment_logits)
              
     batch_size = data.shape[0]
 
