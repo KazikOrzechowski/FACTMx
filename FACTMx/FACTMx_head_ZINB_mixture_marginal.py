@@ -145,20 +145,25 @@ class FACTMx_head_ZINB_mixture_marginal(FACTMx_head):
            latent,
            encoder_assignment_logits,
            beta=1):
-    assignment_logits, _ = self.decode(latent, data)
+    
+    assignment_logits, log_mixture_probs = self.decode(latent, data)
 
-    encoder_entropy = tf.reduce_sum(
-          tfp.distributions.Categorical(logits=encoder_assignment_logits).entropy()
+    log_likelihoods = tf.math.subtract(assignment_logits, log_mixture_probs)
+
+    kl_divergence = tf.reduce_sum(
+          tfp.distributions.Categorical(logits=encoder_assignment_logits).kl_divergence(
+              tfp.distributions.Categorical(logits=log_mixture_probs)
+              )
     )
 
     log_likelihood = tf.reduce_sum(
-        tf.keras.activations.softmax(encoder_assignment_logits, axis=-1) * assignment_logits,
+        tf.keras.activations.softmax(encoder_assignment_logits, axis=-1) * log_likelihoods,
         #axis=2
     )
              
     batch_size = data.shape[0]
 
-    return tf.reduce_sum([self.prop_loss_scale*encoder_entropy/batch_size,
+    return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size,
                           -log_likelihood/batch_size,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
