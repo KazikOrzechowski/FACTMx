@@ -62,7 +62,7 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
     # >>> initialise mixtures >>>
     logits = mixture_params.pop('logits', None)
     if logits is None:
-      logits = tf.keras.initializers.Zeros()(shape=(dim+1, dim_counts))
+      logits = tf.keras.initializers.RandomNormal()(shape=(dim+1, dim_counts))
 
     self.logits = tf.Variable(logits,
                               trainable=True,
