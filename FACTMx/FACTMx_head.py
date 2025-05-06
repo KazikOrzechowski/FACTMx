@@ -3,12 +3,14 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+from logging import warning
+
 try:
   import tensorflow_model_optimization as tfmot
   from tensorflow_model_optimization.python.core.keras.compat import keras
   _TFMOT_IS_LOADED = True
 except ImportError:
-  Warning('TensorFlow Resources Model optimization module not found, weight pruning is disabled.')
+  warning('TensorFlow Resources Model optimization module not found, weight pruning is disabled.')
   import tensorflow.keras as keras
   _TFMOT_IS_LOADED = False
 
