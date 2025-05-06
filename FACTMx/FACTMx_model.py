@@ -29,6 +29,8 @@ class FACTMx_model(tf.Module):
 
     self.dim_latent = dim_latent
     self.beta = beta
+    for head_config in heads_config:
+      head_config.pop('dim_latent', None)
     self.heads = [FACTMx_head.factory(**head_kwargs, dim_latent=self.dim_latent) for head_kwargs in heads_config]
     self.head_dims = [head.dim for head in self.heads]
     self.loss_scales = tf.ones((1+len(self.heads),)) if loss_scales is None else tf.constant(loss_scales)
