@@ -8,7 +8,7 @@ try:
   from tensorflow_model_optimization.python.core.keras.compat import keras
   _TFMOT_IS_LOADED = True
 except ImportError:
-  warning('TensorFlow Resources Model optimization module not found, weight pruning is disabled.')
+  Warning('TensorFlow Resources Model optimization module not found, weight pruning is disabled.')
   import tensorflow.keras as keras
   _TFMOT_IS_LOADED = False
 
