@@ -98,7 +98,7 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
 
 
   def get_mixture_distributions(self):
-    inflated_loc_probs = tf.math.sigmoid(self.inflated_loc_logits) * (1-2*self.eps) + self.eps
+    inflated_loc_probs = tf.math.sigmoid(self.inflated_loc_logits) * .98 + 0.01
     
     return tfp.distributions.ZeroInflatedNegativeBinomial(
         logits=self.logits,
