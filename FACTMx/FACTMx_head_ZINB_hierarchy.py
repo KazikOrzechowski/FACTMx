@@ -64,7 +64,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
 
     # >>> initialise mixtures >>>
     if mixture_params_list is None:
-      mixture_params_list = [{'logits':None, 'log_total_count':None, 'inflated_loc_logits':None}] * self.dim_levels
+      mixture_params_list = [dict()] * self.dim_levels
       
     assert self.dim_levels == len(mixture_params_list)
 
