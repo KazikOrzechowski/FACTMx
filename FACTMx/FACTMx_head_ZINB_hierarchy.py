@@ -121,9 +121,9 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
       inflated_loc_logits = self.level_inflated_loc_logits[0]
     else:
       logits, log_total_count, inflated_loc_logits = previous_params
-      logits = tf.expand_dim(logits, -2) + self.level_logits[level]
-      log_total_count = tf.expand_dim(log_total_count, -2) + self.level_log_total_count[level]
-      inflated_loc_logits = tf.expand_dim(inflated_loc_logits, -2) + self.level_inflated_loc_logits[level]
+      logits = tf.expand_dims(logits, -2) + self.level_logits[level]
+      log_total_count = tf.expand_dims(log_total_count, -2) + self.level_log_total_count[level]
+      inflated_loc_logits = tf.expand_dims(inflated_loc_logits, -2) + self.level_inflated_loc_logits[level]
 
     total_count = tf.math.exp(log_total_count) + self.eps
     inflated_loc_probs = tf.math.sigmoid(inflated_loc_logits) * (1-2*self.eps) + self.eps
@@ -148,7 +148,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
     for level in range(self.dim_levels):
       mixtures, params = self.get_mixture_distributions(level, params)
 
-      log_likelihood = mixtures.log_prob(tf.expand_dim(data, 2))
+      log_likelihood = mixtures.log_prob(tf.expand_dims(data, 2))
       log_likelihood = tf.reduce_sum(log_likelihood, axis=-1)
 
       level_assignment_loglikelihoods.append(log_likelihood)
