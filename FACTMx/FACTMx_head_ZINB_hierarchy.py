@@ -165,6 +165,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
     _batch_size, _subbatch_size, _ = data.shape
     level_assignment_loglikelihoods, log_mixture_probs = self.decode(latent, data)
 
+    log_mixture_probs = tf.expand_dims(log_mixture_probs, 1)
     kl_divergence = tf.reduce_sum(
           tfp.distributions.OneHotCategorical(logits=encoder_assignment_logits).kl_divergence(
               tfp.distributions.OneHotCategorical(logits=log_mixture_probs)
