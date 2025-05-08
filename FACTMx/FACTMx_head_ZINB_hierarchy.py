@@ -198,9 +198,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
     log_proportions_sample = tf.math.log(proportions_sample)
 
-    encoder_input = log_proportions_sample[:,1:] - tf.reshape(log_proportions_sample[:,0], (-1, 1))
-
-    return {'encoder_input': encoder_input,
+    return {'encoder_input': log_proportions_sample,
             'encoder_assignment_sample': assignment_sample,
             'encoder_assignment_logits': assignment_logits}
 
