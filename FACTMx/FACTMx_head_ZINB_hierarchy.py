@@ -21,7 +21,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
                head_name,
                dim_levels=1,
                layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
-               mixture_params_list=[{'logits':None, 'log_total_count':None, 'inflated_loc_logits':None}],
+               mixture_params_list=None,
                temperature=1E-4,
                eps=1E-3,
                prop_loss_scale=1.):
@@ -63,6 +63,9 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
     # <<< initialise layers <<<
 
     # >>> initialise mixtures >>>
+    if mixture_params_list is None:
+      mixture_params_list = [{'logits':None, 'log_total_count':None, 'inflated_loc_logits':None}] * self.dim_levels
+      
     assert self.dim_levels == len(mixture_params_list)
 
     self.level_logits = []
