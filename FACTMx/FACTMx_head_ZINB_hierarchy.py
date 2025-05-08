@@ -210,6 +210,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
         'dim_latent':self.dim_latent,
         'dim_counts':self.dim_counts,
         'dim_topics':self.dim_topics,
+        'dim_levels':self.dim_levels,
         'head_name':self.head_name,
         'head_type':self.head_type,
         'temperature':self.temperature,
