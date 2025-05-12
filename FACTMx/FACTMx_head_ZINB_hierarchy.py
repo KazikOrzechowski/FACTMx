@@ -76,7 +76,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
 
     for level, level_params in enumerate(mixture_params_list):
       _level_shape = (dim_topics,) * (level+1) + (dim_counts,)
-      _logit_init = tf.keras.initializers.RandomNormal(stddev=dim_topics ** (-2*level))
+      _logit_init = tf.keras.initializers.RandomNormal(stddev=dim_topics ** (-3*level))
       _default_init = tf.keras.initializers.Zeros()
 
       logits = level_params.pop('logits', _logit_init(shape=_level_shape))
