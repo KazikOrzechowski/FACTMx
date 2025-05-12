@@ -20,6 +20,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
                dim, dim_latent, dim_counts, dim_topics,
                head_name,
                dim_levels=1,
+               unfrozen_levels=None,
                layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
                mixture_params_list=None,
                temperature=1E-4,
@@ -30,6 +31,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
     self.dim_topics = dim_topics
     self.dim_counts = dim_counts
     self.dim_levels = dim_levels
+    self.unfrozen_levels = dim_levels if unfrozen_levels is None else unfrozen_levels
     self.temperature = temperature
     self.eps = eps
     self.prop_loss_scale = prop_loss_scale
@@ -74,7 +76,11 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
 
     for level, level_params in enumerate(mixture_params_list):
       _level_shape = (dim_topics,) * (level+1) + (dim_counts,)
-      _logit_init = tf.keras.initializers.RandomNormal(stddev=dim_topics ** (-level))
+      #_logit_init = tf.keras.initializers.RandomNormal(stddev=dim_topics ** (-level))
+      if level == 0:
+        _logit_init = tf.keras.initializers.RandomNormal()
+      else:
+        _logit_init = tf.keras.initializers.Zeros()
       _default_init = tf.keras.initializers.Zeros()
 
       logits = level_params.pop('logits', _logit_init(shape=_level_shape))
@@ -144,7 +150,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
     level_assignment_loglikelihoods = []
 
     params = None
-    for level in range(self.dim_levels):
+    for level in range(self.unfrozen_levels):
       mixtures, params = self.get_mixture_distributions(level, params)
 
       log_likelihood = mixtures.log_prob(tf.expand_dims(data, 2))
@@ -173,11 +179,12 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
 
     level_loglikelihoods = []
     for level in range(self.dim_levels-1, -1, -1):
-      log_likelihood = tf.reduce_sum(
-          tf.math.multiply(encoder_assignment_sample, level_assignment_loglikelihoods[level]),
-      )
-
-      level_loglikelihoods.append(log_likelihood)
+      if level < self.unfrozen_levels:
+        log_likelihood = tf.reduce_sum(
+            tf.math.multiply(encoder_assignment_sample, level_assignment_loglikelihoods[level]),
+        )
+  
+        level_loglikelihoods.append(log_likelihood)
 
       encoder_assignment_sample = tf.reshape(encoder_assignment_sample, (_batch_size, _subbatch_size, -1, self.dim_topics))
       encoder_assignment_sample = tf.reduce_sum(encoder_assignment_sample, axis=-1)
@@ -210,6 +217,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
         'dim_counts':self.dim_counts,
         'dim_topics':self.dim_topics,
         'dim_levels':self.dim_levels,
+        'unfrozen_levels':self.unfrozen_levels,
         'head_name':self.head_name,
         'head_type':self.head_type,
         'temperature':self.temperature,
