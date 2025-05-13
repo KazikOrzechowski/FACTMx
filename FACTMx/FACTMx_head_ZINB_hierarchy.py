@@ -127,13 +127,14 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
       log_total_count = tf.expand_dims(log_total_count, -2) + self.level_log_total_count[level]
       inflated_loc_logits = tf.expand_dims(inflated_loc_logits, -2) + self.level_inflated_loc_logits[level]
 
+    probs = tf.math.sigmoid(logits) + self.eps
     total_count = tf.math.exp(log_total_count) + self.eps
     inflated_loc_probs = tf.math.sigmoid(inflated_loc_logits) * 0.9
     #reshape to flat mixtures
     _flat_shape = (-1, self.dim_counts)
 
     return tfp.distributions.ZeroInflatedNegativeBinomial(
-        logits=tf.reshape(logits, _flat_shape),
+        probs=tf.reshape(probs, _flat_shape),
         total_count=tf.reshape(total_count, _flat_shape),
         inflated_loc_probs=tf.reshape(inflated_loc_probs, _flat_shape),
         require_integer_total_count=False,
