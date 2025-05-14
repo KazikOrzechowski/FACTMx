@@ -197,6 +197,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
 
   def encode(self, data):
     assignment_logits = self.layers['encoder_classifier'](data)
+    assignment_logits = tf.math.log(tf.math.exp(assignment_logits) + self.eps)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
