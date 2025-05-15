@@ -129,7 +129,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
 
     probs = tf.math.sigmoid(logits) + self.eps
     total_count = tf.math.exp(log_total_count) + self.eps
-    inflated_loc_probs = tf.math.sigmoid(inflated_loc_logits) * 0.9
+    inflated_loc_probs = tf.math.sigmoid(inflated_loc_logits) * 0.75
     #reshape to flat mixtures
     _flat_shape = (-1, self.dim_counts)
 
