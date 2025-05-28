@@ -70,17 +70,17 @@ class FACTMx_head_GMM(FACTMx_head):
     if mixture_locs == 'random':
       mixture_locs = tf.keras.initializers.Orthogonal()(shape=(dim+1, dim_normal))
 
-    self.mixture_locs = tf.Variable(mixture_locs,
-                                    trainable=True,
-                                    dtype=tf.float32)
+    self.mixture_locs = tf.keras.Variable(mixture_locs,
+                                          trainable=True,
+                                          dtype=tf.float32)
 
     mixture_log_covs = mixture_params.pop('log_cov_diag', 0.)
     if isinstance(mixture_log_covs, float):
       mixture_log_covs = mixture_log_covs + tf.keras.initializers.Zeros()(shape=(dim+1, dim_normal))
     
-    self.mixture_log_covs = tf.Variable(mixture_log_covs,
-                                        trainable=True,
-                                        dtype=tf.float32)
+    self.mixture_log_covs = tf.keras.Variable(mixture_log_covs,
+                                              trainable=True,
+                                              dtype=tf.float32)
 
     mixture_cov_perturb = mixture_params.pop('cov_perturb_factor', None)
     if mixture_cov_perturb is None:
@@ -90,9 +90,9 @@ class FACTMx_head_GMM(FACTMx_head):
       _cov_perturb_shape = (dim+1, dim_normal, self.n_cov_perturb_factor)
       mixture_cov_perturb = tf.keras.initializers.Orthogonal()(shape=_cov_perturb_shape)
 
-    self.mixture_cov_perturb = tf.Variable(mixture_cov_perturb,
-                                           trainable=True,
-                                           dtype=tf.float32)
+    self.mixture_cov_perturb = tf.keras.Variable(mixture_cov_perturb,
+                                                 trainable=True,
+                                                 dtype=tf.float32)
     # <<< initialise mixtures <<<
 
     # get training variables
