@@ -37,7 +37,7 @@ class FACTMx_head_GMM_masked(FACTMx_head_GMM, FACTMx_head):
       self.layers['preencoder'] = tf.keras.Sequential.from_config(preencoder_config)
 
     if masked_token is None:
-      masked_token = tf.random.normal(shape=(self.dim_latent,))
+      masked_token = tf.random.normal(shape=(self.dim_latent,), stddev=.1)
     self.masked_token = tf.keras.Variable(masked_token)
 
     # get training variables
@@ -117,7 +117,7 @@ class FACTMx_head_FlexTopicModel_masked(FACTMx_head_FlexTopicModel, FACTMx_head)
       self.layers['preencoder'] = tf.keras.Sequential.from_config(preencoder_config)
 
     if masked_token is None:
-      masked_token = tf.random.normal(shape=(self.dim_latent,))
+      masked_token = tf.random.normal(shape=(self.dim_latent,), stddev=.1)
     self.masked_token = tf.keras.Variable(masked_token)
 
     # get training variables
@@ -198,7 +198,7 @@ class FACTMx_head_MultiNormal_masked(FACTMx_head_MultiNormal, FACTMx_head):
       self.layers['preencoder'] = tf.keras.Sequential.from_config(preencoder_config)
 
     if masked_token is None:
-      masked_token = tf.random.normal(shape=(self.dim_latent,))
+      masked_token = tf.random.normal(shape=(self.dim_latent,), stddev=.1)
     self.masked_token = tf.keras.Variable(masked_token)
 
     # get training variables
