@@ -178,13 +178,15 @@ class FACTMx_encoder_Attention(FACTMx_encoder):
   def encode_params(self, data):
     #return loc and cov parameters of the latent distributions for data points
     n_heads = len(self.head_dims)
-
+    
+    #data comes concatenated to shape (n_batch, n_heads*dim_latent)
     flat_data = tf.reshape(data, shape=(-1, self.dim_latent))
 
     keys = self.layers['key_transform'](flat_data)
     keys = tf.reshape(keys, shape=(-1, n_heads, self.dim_latent))
 
-    values = self.attention_mechanism([keys, data])
+    broad_data = tf.reshape(data, shape=(-1, n_heads, self.dim_latent))
+    values = self.attention_mechanism([keys, broad_data])
 
     loc = tf.reduce_mean(values, axis=1)
 
