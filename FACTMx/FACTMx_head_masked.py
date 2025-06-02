@@ -216,15 +216,11 @@ class FACTMx_head_MultiNormal_masked(FACTMx_head_MultiNormal, FACTMx_head):
   def loss(self,
            data,
            latent,
-           encoder_assignment_sample,
-           encoder_assignment_logits,
            beta=1):
     observed, mask = data
 
     super_loss = super().loss(observed,
                               latent,
-                              encoder_assignment_sample,
-                              encoder_assignment_logits,
                               beta)
 
     return tf.reduce_sum([super_loss, *self.layers['preencoder'].losses])
