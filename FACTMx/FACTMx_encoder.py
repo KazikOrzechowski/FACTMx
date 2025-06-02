@@ -31,11 +31,11 @@ class FACTMx_encoder(tf.Module):
 
   def save_weights(self, encoder_path):
     for key, layer in self.layers.items():
-      layer.save_weights(f'{head_path}_{key}.weights.h5')
+      layer.save_weights(f'{encoder_path}_{key}.weights.h5')
 
   def load_weights(self, encoder_path):
     for key, layer in self.layers.items():
-      layer.load_weights(f'{head_path}_{key}.weights.h5')
+      layer.load_weights(f'{encoder_path}_{key}.weights.h5')
 
   def factory(encoder_type='Linear', **kwargs):
     FACTMx_encoder_map = {encoder.encoder_type: encoder for encoder in FACTMx_encoder.__subclasses__()}
