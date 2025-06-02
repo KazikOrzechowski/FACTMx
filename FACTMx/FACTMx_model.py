@@ -101,6 +101,7 @@ class FACTMx_model(tf.Module):
     validation_losses = []
 
     temperature_update_scale = kwargs.pop('temperature_update', None)
+    eps_update_scale = kwargs.pop('eps_update', None)
 
     for epoch in range(epochs):
       if shuffle:
