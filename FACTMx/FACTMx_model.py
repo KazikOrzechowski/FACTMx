@@ -84,6 +84,12 @@ class FACTMx_model(tf.Module):
           head.temperature *= temperature_update_scale
     return
 
+  def update_heads_eps(self, eps_update_scale):
+    for head in self.heads:
+        if 'eps' in head.__dict__.keys():
+          head.eps *= eps_update_scale
+    return
+
   def train(self,
             dataset,
             validation_dataset=None,
@@ -111,6 +117,8 @@ class FACTMx_model(tf.Module):
 
       if temperature_update_scale is not None:
         self.update_heads_temperature(temperature_update_scale)
+      if eps_update_scale is not None:
+        self.update_heads_eps(eps_update_scale)
 
       if validation_dataset is not None:
         validation_losses.append(-self.elbo(validation_dataset))
