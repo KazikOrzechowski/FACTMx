@@ -155,7 +155,7 @@ class FACTMx_encoder_Attention(FACTMx_encoder):
     self.eps = eps
     self.layers = {}
 
-    assert dim_latent = head_dims[0]
+    assert dim_latent == head_dims[0]
     assert all_equal(head_dims)
 
     self.attention_mechanism = tf.keras.layers.Attention()
