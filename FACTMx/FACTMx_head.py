@@ -21,13 +21,15 @@ from FACTMx.custom_keras_layers import ConstantResponse
 
 class FACTMx_head(tf.Module):
   dim: int
+  dim_preencoded: int
   dim_latent: int
   head_name: str
   layers: dict
 
-  def __init__(self, dim, dim_latent, head_name):
+  def __init__(self, dim, dim_latent, head_name, dim_preencoded=None):
     self.dim = dim
     self.dim_latent = dim_latent
+    self.dim_preencoded = dim_preencoded if dim_preencoded is not None else dim
     self.head_name = head_name
     self.layers = {}
 
@@ -44,6 +46,15 @@ class FACTMx_head(tf.Module):
   def load_weights(self, head_path):
     for key, layer in self.layers.items():
       layer.load_weights(f'{head_path}_{key}.weights.h5')
+
+  def get_config(self):
+    config = {
+      'dim': self.dim,
+      'dim_latent': self.dim_latent,
+      'dim_preencoded': self.dim_preencoded,
+      'head_name': self.head_name
+    }
+    return config
 
   def factory(head_type, **kwargs):
     FACTMx_head_map = {head.head_type: head for head in FACTMx_head.__subclasses__()}
@@ -106,13 +117,11 @@ class FACTMx_head_Bernoulli(FACTMx_head):
     return loss
 
   def get_config(self):
-    config = {
+    config = super().get_config()
+    config.update({
         'head_type': self.head_type,
-        'dim': self.dim,
-        'dim_latent': self.dim_latent,
-        'head_name': self.head_name,
         'layer_configs': {'logits': self.layers['logits'].get_config()}
-    }
+    })
     return config
 
   def from_config(config):
@@ -179,13 +188,11 @@ class FACTMx_head_Multinomial(FACTMx_head):
     return loss 
 
   def get_config(self):
-    config = {
+    config = super().get_config()
+    config.update({
         'head_type': self.head_type,
-        'dim': self.dim,
-        'dim_latent': self.dim_latent,
-        'head_name': self.head_name,
         'layer_configs': {'logits': self.layers['logits'].get_config()}
-    }
+    })
     return config
 
   def from_config(config):
@@ -261,14 +268,12 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     return loss
 
   def get_config(self):
-    config = {
+    config = super().get_config()
+    config.update({
                 "head_type": self.head_type,
-                "dim": self.dim,
-                "dim_latent": self.dim_latent,
-                "head_name": self.head_name,
                 "eps": self.eps,
                 "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()}
-             }
+             })
     return config
 
   def from_config(config):
