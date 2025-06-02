@@ -37,10 +37,11 @@ class FACTMx_model(tf.Module):
     self.layers = None #handled by pruning module
 
     if encoder_config is None:
-      encoder_config = {'dim_latent': dim_latent, 
-                       'head_dims': self.head_dims,
-                       'prior_params': prior_params}
-    self.encoder = FACTMx_encoder.factory(encoder_config)
+      encoder_config = {'encoder_type': 'Linear',
+                        'dim_latent': dim_latent, 
+                        'head_dims': self.head_dims,
+                        'prior_params': prior_params}
+    self.encoder = FACTMx_encoder.factory(**encoder_config)
 
     #gather training variables TODO check why tf.Module fails to collect them automatically
     self.t_vars = (*self.encoder.t_vars, *(var for head in self.heads for var in head.t_vars))
