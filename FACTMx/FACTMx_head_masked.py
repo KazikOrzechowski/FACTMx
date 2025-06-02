@@ -38,7 +38,7 @@ class FACTMx_head_GMM_masked(FACTMx_head_GMM, FACTMx_head):
 
     if masked_token is None:
       masked_token = tf.random.normal(shape=(self.dim_latent,))
-    self.masked_token = tf.Variable(masked_token)
+    self.masked_token = tf.keras.Variable(masked_token)
 
     # get training variables
     self.t_vars = [*self.t_vars,
@@ -118,7 +118,7 @@ class FACTMx_head_FlexTopicModel_masked(FACTMx_head_FlexTopicModel, FACTMx_head)
 
     if masked_token is None:
       masked_token = tf.random.normal(shape=(self.dim_latent,))
-    self.masked_token = tf.Variable(masked_token)
+    self.masked_token = tf.keras.Variable(masked_token)
 
     # get training variables
     self.t_vars = [*self.t_vars,
@@ -199,7 +199,7 @@ class FACTMx_head_MultiNormal_masked(FACTMx_head_MultiNormal, FACTMx_head):
 
     if masked_token is None:
       masked_token = tf.random.normal(shape=(self.dim_latent,))
-    self.masked_token = tf.Variable(masked_token)
+    self.masked_token = tf.keras.Variable(masked_token)
 
     # get training variables
     self.t_vars = [*self.t_vars,
