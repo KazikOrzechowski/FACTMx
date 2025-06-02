@@ -52,7 +52,7 @@ class FACTMx_encoder_Linear(FACTMx_encoder):
                name=None, 
                prior_params=None, 
                eps=1E-5,):
-    super().__init__(self, dim_latent, head_dims, name=None,)
+    super().__init__(dim_latent, head_dims, name)
     self.eps = eps
     self.layers = {}
 
@@ -151,7 +151,7 @@ class FACTMx_encoder_Attention(FACTMx_encoder):
                name=None,
                prior_params=None,
                eps=1E-5,):
-    super().__init__(self, dim_latent, head_dims, name=None,)
+    super().__init__(dim_latent, head_dims, name)
     self.eps = eps
     self.layers = {}
 
