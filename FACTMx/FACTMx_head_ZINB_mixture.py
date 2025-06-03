@@ -64,25 +64,25 @@ class FACTMx_head_ZINB_mixture(FACTMx_head):
     if logits is None:
       logits = tf.keras.initializers.RandomNormal()(shape=(dim+1, dim_counts))
 
-    self.logits = tf.Variable(logits,
-                              trainable=True,
-                              dtype=tf.float32)
+    self.logits = tf.keras.Variable(logits,
+                                    trainable=True,
+                                    dtype=tf.float32)
 
     log_total_count = mixture_params.pop('log_total_count', None)
     if log_total_count is None:
       log_total_count = tf.keras.initializers.Zeros()(shape=(dim+1, dim_counts))
 
-    self.log_total_count = tf.Variable(log_total_count,
-                                       trainable=True,
-                                       dtype=tf.float32)
+    self.log_total_count = tf.keras.Variable(log_total_count,
+                                             trainable=True,
+                                             dtype=tf.float32)
 
     inflated_loc_logits = mixture_params.pop('inflated_loc_logits', None)
     if inflated_loc_logits is None:
       inflated_loc_logits = tf.keras.initializers.Zeros()(shape=(dim+1, dim_counts))
 
-    self.inflated_loc_logits = tf.Variable(inflated_loc_logits,
-                                           trainable=True,
-                                           dtype=tf.float32)
+    self.inflated_loc_logits = tf.keras.Variable(inflated_loc_logits,
+                                                 trainable=True,
+                                                 dtype=tf.float32)
     # <<< initialise mixtures <<<
 
     # get training variables
