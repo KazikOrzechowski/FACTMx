@@ -202,6 +202,7 @@ class FACTMx_head_GMM(FACTMx_head):
         'head_name':self.head_name,
         'head_type':self.head_type,
         'temperature':self.temperature,
+        'eps':self.eps,
         'max_n_perturb_factor':self.n_cov_perturb_factor,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
         'mixture_params':{
