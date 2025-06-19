@@ -258,7 +258,7 @@ class FACTMx_encoder_Mean(FACTMx_encoder):
     assert all_equal(head_dims)
 
     if log_scale_diag is None:
-      log_scale_diag = tf.keras.initializers.Zeros((dim_latent,))
+      log_scale_diag = tf.keras.initializers.Zeros()((dim_latent,))
     self.log_scale_diag = tf.keras.Variable(log_scale_diag)
 
     self.t_vars = (self.log_scale_diag,)
