@@ -239,3 +239,94 @@ class FACTMx_encoder_Attention(FACTMx_encoder):
 
   def from_config(config):
     return FACTMx_encoder_Attention(**config)
+
+
+
+class FACTMx_encoder_Mean(FACTMx_encoder):
+  encoder_type = 'Mean'
+
+  def __init__(self, dim_latent, head_dims,
+               log_scale_diag=None,
+               name=None,
+               prior_params=None,
+               eps=1E-5,):
+    super().__init__(dim_latent, head_dims, name)
+    self.eps = eps
+    self.layers = {}
+
+    assert dim_latent == head_dims[0]
+    assert all_equal(head_dims)
+
+    if scale_diag is None:
+      log_scale_diag = tf.keras.initializers.Zeros((dim_latent,))
+    self.log_scale_diag = tf.keras.Variable(log_scale_diag)
+
+    self.t_vars = (self.log_scale_diag,)
+
+    if prior_params is None:
+      loc = tf.zeros(dim_latent)
+      scale_tril = tf.eye(dim_latent)
+      self.prior = tfp.distributions.MultivariateNormalTriL(loc, scale_tril)
+    else:
+      self.prior = tfp.distributions.MultivariateNormalTriL(**prior_params)
+
+
+  def encode_params(self, data):
+    #return loc and cov parameters of the latent distributions for data points
+    n_heads = len(self.head_dims)
+    
+    #data comes concatenated to shape (n_batch, n_heads*dim_latent)
+    broad_data = tf.reshape(data, shape=(-1, n_heads, self.dim_latent))
+
+    loc = tf.reduce_mean(broad_data, axis=1)
+
+    scale_diag = tf.math.exp(self.log_scale_diag) + self.eps
+    scale_diag = tf.linalg.diag(scale_diag)
+
+    return loc, scale_diag
+
+  def make_encoder(self, data):
+    #return an encoding distribution for data points
+    loc, scale_tril = self.encode_params(data)
+    return tfp.distributions.MultivariateNormalTriL(loc, scale_tril)
+
+  def encode(self, data):
+    #encode data to latent points
+    return self.make_encoder(data).sample()
+
+  def encode_with_loss(self, data):
+    encoder = self.make_encoder(data)
+
+    sample = encoder.sample()
+    loss = tf.reduce_mean(encoder.kl_divergence(self.prior))
+
+    for layer in self.layers.values():
+      loss += tf.reduce_sum(layer.losses)
+
+    return sample, loss
+
+  def loss(self, data):
+    #return kl divergence loss between the encoded posteriors and the prior distribution
+    encoder = self.make_encoder(data)
+    loss = tf.reduce_mean(encoder.kl_divergence(self.prior))
+
+    for layer in self.layers.values():
+      loss += tf.reduce_sum(layer.losses)
+
+    return loss
+
+  def get_config(self):
+    config = {  
+                "encoder_type": self.encoder_type,
+                "dim_latent": self.dim_latent,
+                "head_dims": self.head_dims,
+                "eps": self.eps,
+                "log_scale_diag": self.log_scale_diag.numpy().tolist(),
+                "prior_params": {'loc':self.prior.loc.numpy().tolist(),
+                                 'scale_tril':self.prior.scale_tril.numpy().tolist()},
+             }
+
+    return config
+
+  def from_config(config):
+    return FACTMx_encoder_Mean(**config)
