@@ -251,3 +251,133 @@ class FACTMx_head_MultiNormal_masked(FACTMx_head_MultiNormal, FACTMx_head):
 
   def from_config(config):
     return FACTMx_head_MultiNormal_masked(**config)
+
+
+# >>> Masked by zeros heads
+class FACTMx_head_GMM_maskedZeros(FACTMx_head_GMM, FACTMx_head):
+  head_type = 'GMM_maskedZeros'
+
+  def __init__(self,
+               **super_kwargs):
+    super().__init__(**super_kwargs)
+    self.head_type = 'GMM_maskedZeros'
+    self.masked_token = tf.zeros(shape=(self.dim,))
+
+  def decode(self, latent, data):
+    observed, mask = data
+
+    return super().decode(latent, observed)
+
+  def loss(self,
+           data,
+           latent,
+           encoder_assignment_sample,
+           encoder_assignment_logits,
+           beta=1):
+    observed, mask = data
+
+    return super().loss(observed,
+                        latent,
+                        encoder_assignment_sample,
+                        encoder_assignment_logits,
+                        beta)
+
+  def encode(self, data):
+    observed, mask = data
+
+    encoder_dict = super().encode(observed)
+
+    preencoded_input = encoder_dict['encoder_input']
+    masked_preencoded_input = (1-mask) * preencoded_input +\
+                                mask * tf.expand_dims(self.masked_token, 0)
+
+    encoder_dict['encoder_input'] = masked_preencoded_input
+
+    return encoder_dict
+
+  def from_config(config):
+    return FACTMx_head_GMM_maskedZeros(**config)
+
+
+class FACTMx_head_FlexTopicModel_maskedZeros(FACTMx_head_FlexTopicModel, FACTMx_head):
+  head_type = 'FlexTopicModel_maskedZeros'
+
+  def __init__(self,
+               **super_kwargs):
+    super().__init__(**super_kwargs)
+    self.head_type = 'FlexTopicModel_maskedZeros'
+    self.masked_token = tf.zeros(shape=(self.dim,))
+
+  def decode(self, latent, data):
+    observed, mask = data
+
+    return super().decode(latent, observed)
+
+  def loss(self,
+           data,
+           latent,
+           encoder_assignment_sample,
+           encoder_assignment_logits,
+           beta=1):
+    observed, mask = data
+
+    return super().loss(observed,
+                        latent,
+                        encoder_assignment_sample,
+                        encoder_assignment_logits,
+                        beta)
+
+  def encode(self, data):
+    observed, mask = data
+
+    encoder_dict = super().encode(observed)
+
+    preencoded_input = encoder_dict['encoder_input']
+    masked_preencoded_input = (1-mask) * preencoded_input +\
+                                mask * tf.expand_dims(self.masked_token, 0)
+
+    encoder_dict['encoder_input'] = masked_preencoded_input
+
+    return encoder_dict
+
+  def from_config(config):
+    return FACTMx_head_FlexTopicModel_maskedZeros(**config)
+
+
+class FACTMx_head_MultiNormal_maskedZeros(FACTMx_head_MultiNormal, FACTMx_head):
+  head_type = 'MultiNormal_maskedZeros'
+
+  def __init__(self,
+               **super_kwargs):
+    super().__init__(**super_kwargs)
+    self.head_type = 'MultiNormal_maskedZeros'
+    self.masked_token = tf.zeros(shape=(self.dim,))
+
+  def decode(self, latent, data):
+    observed, mask = data
+
+    return super().decode(latent, observed)
+
+  def loss(self,
+           data,
+           latent,
+           beta=1):
+    observed, mask = data
+
+    return super().loss(observed, latent, beta)
+
+  def encode(self, data):
+    observed, mask = data
+
+    encoder_dict = super().encode(observed)
+
+    preencoded_input = encoder_dict['encoder_input']
+    masked_preencoded_input = (1-mask) * preencoded_input +\
+                                mask * tf.expand_dims(self.masked_token, 0)
+
+    encoder_dict['encoder_input'] = masked_preencoded_input
+
+    return encoder_dict
+
+  def from_config(config):
+    return FACTMx_head_MultiNormal_maskedZeros(**config)
