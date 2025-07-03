@@ -271,7 +271,7 @@ class FACTMx_head_GMM_maskedZeros(FACTMx_head_GMM, FACTMx_head):
       masked_token = tf.keras.initializers.RandomNormal()(shape=(self.dim,))
 
     if trainable:
-      self.masked_token = tf.keras.Variable(shape=(self.dim,))
+      self.masked_token = tf.keras.Variable(masked_token)
       self.t_vars = tuple([*self.t_vars, self.masked_token])
     else:
       self.masked_token = tf.constant(masked_token)
@@ -337,7 +337,7 @@ class FACTMx_head_FlexTopicModel_maskedZeros(FACTMx_head_FlexTopicModel, FACTMx_
       masked_token = tf.keras.initializers.RandomNormal()(shape=(self.dim,))
 
     if trainable:
-      self.masked_token = tf.keras.Variable(shape=(self.dim,))
+      self.masked_token = tf.keras.Variable(masked_token)
       self.t_vars = tuple([*self.t_vars, self.masked_token])
     else:
       self.masked_token = tf.constant(masked_token)
@@ -403,7 +403,7 @@ class FACTMx_head_MultiNormal_maskedZeros(FACTMx_head_MultiNormal, FACTMx_head):
       masked_token = tf.keras.initializers.RandomNormal()(shape=(self.dim,))
 
     if trainable:
-      self.masked_token = tf.keras.Variable(shape=(self.dim,))
+      self.masked_token = tf.keras.Variable(masked_token)
       self.t_vars = tuple([*self.t_vars, self.masked_token])
     else:
       self.masked_token = tf.constant(masked_token)
