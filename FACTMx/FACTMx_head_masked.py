@@ -253,15 +253,28 @@ class FACTMx_head_MultiNormal_masked(FACTMx_head_MultiNormal, FACTMx_head):
     return FACTMx_head_MultiNormal_masked(**config)
 
 
-# >>> Masked by zeros heads
+# >>> Masked by token heads
 class FACTMx_head_GMM_maskedZeros(FACTMx_head_GMM, FACTMx_head):
   head_type = 'GMM_maskedZeros'
 
   def __init__(self,
+               masked_token=None,
+               trainable=False,
                **super_kwargs):
     super().__init__(**super_kwargs)
     self.head_type = 'GMM_maskedZeros'
-    self.masked_token = tf.zeros(shape=(self.dim,))
+    self.trainable = trainable
+                 
+    if masked_token is None:
+      masked_token = tf.zeros(shape=(self.dim,))
+    if masked_token == 'random':
+      masked_token = tf.keras.initializers.RandomNormal()(shape=(self.dim,))
+
+    if trainable:
+      self.masked_token = tf.keras.Variable(shape=(self.dim,))
+      self.t_vars = tuple([*self.t_vars, self.masked_token])
+    else:
+      self.masked_token = tf.constant(masked_token)
 
   def decode(self, latent, data):
     observed, mask = data
@@ -294,6 +307,14 @@ class FACTMx_head_GMM_maskedZeros(FACTMx_head_GMM, FACTMx_head):
     encoder_dict['encoder_input'] = masked_preencoded_input
 
     return encoder_dict
+
+  def get_config(self):
+    config = super().get_config()
+    config.update({
+                'masked_token': self.masked_token.numpy().tolist(),
+                'trainable': self.trainable
+             })
+    return config
 
   def from_config(config):
     return FACTMx_head_GMM_maskedZeros(**config)
@@ -303,10 +324,23 @@ class FACTMx_head_FlexTopicModel_maskedZeros(FACTMx_head_FlexTopicModel, FACTMx_
   head_type = 'FlexTopicModel_maskedZeros'
 
   def __init__(self,
+               masked_token=None,
+               trainable=False,
                **super_kwargs):
     super().__init__(**super_kwargs)
     self.head_type = 'FlexTopicModel_maskedZeros'
-    self.masked_token = tf.zeros(shape=(self.dim,))
+    self.trainable = trainable
+                 
+    if masked_token is None:
+      masked_token = tf.zeros(shape=(self.dim,))
+    if masked_token == 'random':
+      masked_token = tf.keras.initializers.RandomNormal()(shape=(self.dim,))
+
+    if trainable:
+      self.masked_token = tf.keras.Variable(shape=(self.dim,))
+      self.t_vars = tuple([*self.t_vars, self.masked_token])
+    else:
+      self.masked_token = tf.constant(masked_token)
 
   def decode(self, latent, data):
     observed, mask = data
@@ -340,6 +374,14 @@ class FACTMx_head_FlexTopicModel_maskedZeros(FACTMx_head_FlexTopicModel, FACTMx_
 
     return encoder_dict
 
+  def get_config(self):
+    config = super().get_config()
+    config.update({
+                'masked_token': self.masked_token.numpy().tolist(),
+                'trainable': self.trainable
+             })
+    return config
+
   def from_config(config):
     return FACTMx_head_FlexTopicModel_maskedZeros(**config)
 
@@ -348,10 +390,24 @@ class FACTMx_head_MultiNormal_maskedZeros(FACTMx_head_MultiNormal, FACTMx_head):
   head_type = 'MultiNormal_maskedZeros'
 
   def __init__(self,
+               masked_token=None,
+               trainable=False,
                **super_kwargs):
     super().__init__(**super_kwargs)
     self.head_type = 'MultiNormal_maskedZeros'
-    self.masked_token = tf.zeros(shape=(self.dim,))
+    self.trainable = trainable
+                 
+    if masked_token is None:
+      masked_token = tf.zeros(shape=(self.dim,))
+    if masked_token == 'random':
+      masked_token = tf.keras.initializers.RandomNormal()(shape=(self.dim,))
+
+    if trainable:
+      self.masked_token = tf.keras.Variable(shape=(self.dim,))
+      self.t_vars = tuple([*self.t_vars, self.masked_token])
+    else:
+      self.masked_token = tf.constant(masked_token)
+    
 
   def decode(self, latent, data):
     observed, mask = data
@@ -378,6 +434,14 @@ class FACTMx_head_MultiNormal_maskedZeros(FACTMx_head_MultiNormal, FACTMx_head):
     encoder_dict['encoder_input'] = masked_preencoded_input
 
     return encoder_dict
+
+  def get_config(self):
+    config = super().get_config()
+    config.update({
+                'masked_token': self.masked_token.numpy().tolist(),
+                'trainable': self.trainable
+             })
+    return config
 
   def from_config(config):
     return FACTMx_head_MultiNormal_maskedZeros(**config)
