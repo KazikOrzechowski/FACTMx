@@ -72,12 +72,12 @@ class FACTMx_head_ClonalTree(FACTMx_head):
       self.log_mut_assignment = tf.keras.Variable(tf.zeros((self.dim_pos, self.all_tumour_clones)),
                                                   trainable=True,
                                                   dtype=tf.float32,
-                                                  name='log_mut_assignment')
+                                                  name=f'{head_name}_log_mut_assignment')
     else:
       self.log_mut_assignment = tf.keras.Variable(log_mut_assignment,
                                                   trainable=True,
                                                   dtype=tf.float32,
-                                                  name='log_mut_assignment')
+                                                  name=f'{head_name}_log_mut_assignment')
 
     self.level_shapes = [(self.dim_pos,) + (2,) * i + (1,) * (self.levels-i) for i in range(self.levels+1)]
     self.level_inds = [slice(2**i - 1, 2**(i+1)-1) for i in range(self.levels+1)]
