@@ -22,7 +22,7 @@ class FACTMx_head_ClonalTree(FACTMx_head):
                log_mut_assignment=None,
                layer_configs={'logits':'linear', 'encoder_classifier':'linear'},
                prob_obs=.5, prob_unobs=.01,
-               temperature=1E-4, eps=1E-3,
+               temperature=1E-2, eps=1E-10,
                prop_loss_scale=1.):
     super().__init__(dim, dim_latent, head_name)
     # dim clones should be tumour leaf clones +1 for the normal clone
@@ -131,15 +131,20 @@ class FACTMx_head_ClonalTree(FACTMx_head):
   def loss(self,
             data,
             latent,
+            encoder_assignment_logits,
             encoder_assignment_sample,
             beta=1):
     _batch_size = data[0].shape[0]
     sample, log_like, log_probs = self.decode(latent, data)
 
+    kl_loss = tfp.distributions.Categorical(encoder_assignment_logits).kl_divergence(
+      tfp.distributions.Categorical(log_probs))
+    kl_loss = tf.reduce_sum(kl_loss)
+              
     log_loss = tf.reduce_sum(encoder_assignment_sample * log_like)
-    log_loss = log_loss / _batch_size
 
-    return tf.reduce_sum([log_loss,
+    return tf.reduce_sum([kl_loss / _batch_size,
+                          log_loss / _batch_size,
                           *self.layers['logits'].losses,
                           *self.layers['encoder_classifier'].losses])
 
@@ -147,10 +152,11 @@ class FACTMx_head_ClonalTree(FACTMx_head):
     mut, counts = data
 
     assignment_logits = self.layers['encoder_classifier'](mut)
-    #assignment_logits = tf.math.log(tf.math.exp(assignment_logits) + self.eps)
+    assignment_logits = tf.math.log(tf.math.exp(assignment_logits) + self.eps)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
     return {'encoder_input': assignment_logits,
+            'encoder_assignment_logits': assignment_logits,
             'encoder_assignment_sample': assignment_sample}
 
   def get_config(self):
