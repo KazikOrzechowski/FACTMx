@@ -122,7 +122,8 @@ class FACTMx_head_ClonalTree(FACTMx_head):
 
     log_prior = self.decode_log_probs(latent)
     log_like = self.get_clone_distributions(self.get_clone_profiles_sample(), counts).log_prob(mut)
-    log_post = log_prior + tf.reduce_sum(log_like, axis=-1)
+    log_like = tf.reduce_sum(log_like, axis=-1)
+    log_post = log_prior + log_like
 
     sample = self.get_assignment_distribution(log_post).sample()
 
