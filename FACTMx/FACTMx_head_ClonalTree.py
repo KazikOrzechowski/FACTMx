@@ -126,7 +126,7 @@ class FACTMx_head_ClonalTree(FACTMx_head):
 
     sample = self.get_assignment_distribution(log_post).sample()
 
-    return sample, log_post, log_prior
+    return sample, log_like, log_prior
 
   def loss(self,
             data,
@@ -134,9 +134,9 @@ class FACTMx_head_ClonalTree(FACTMx_head):
             encoder_assignment_sample,
             beta=1):
     _batch_size = data[0].shape[0]
-    sample, logits, log_probs = self.decode(latent, data)
+    sample, log_like, log_probs = self.decode(latent, data)
 
-    log_loss = tf.reduce_sum(encoder_assignment_sample * logits)
+    log_loss = tf.reduce_sum(encoder_assignment_sample * log_like)
     log_loss = log_loss / _batch_size
 
     return tf.reduce_sum([log_loss,
