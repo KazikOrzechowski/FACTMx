@@ -107,7 +107,7 @@ class FACTMx_head_ZINB_mixture2(FACTMx_head):
     count_spread = tf.nn.softmax(self.log_count_spread, axis=1)
 
     logits = tf.reshape(self.logits, _broad_mix_shape)
-    total_count = tf.reshape(library_sizes, _broad_data_shape) * tf.reshape(count_spread, _broad_mix_shape)
+    total_count = tf.reshape(library_sizes, _broad_data_shape) * tf.reshape(count_spread, _broad_mix_shape) + self.eps
     inflated_loc_probs = tf.broadcast_to(inflated_loc_probs, _broad_inflation_shape)
     
     return tfp.distributions.ZeroInflatedNegativeBinomial(
