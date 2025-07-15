@@ -99,7 +99,7 @@ class FACTMx_head_ZINB_mixture2(FACTMx_head):
 
 
   def get_mixture_distributions(self, library_sizes):
-    _broad_mix_shape = (1, 1, self.dim_mix, self.dim_counts)
+    _broad_mix_shape = (1, 1, self.dim_mixtures, self.dim_counts)
     _broad_data_shape = library_sizes.shape + (1, 1)
     _broad_inflation_shape = (1, 1, 1, self.dim_counts)
     
