@@ -101,14 +101,14 @@ class FACTMx_head_ZINB_mixture2(FACTMx_head):
   def get_mixture_distributions(self, library_sizes):
     _broad_mix_shape = (1, 1, self.dim_mixtures, self.dim_counts)
     _broad_data_shape = library_sizes.shape + (1, 1)
-    _broad_inflation_shape = (1, 1, 1, self.dim_counts)
+    _broad_inflation_shape = library_sizes.shape + (self.dim_mixtures, self.dim_counts)
     
     inflated_loc_probs = tf.math.sigmoid(self.inflated_loc_logits) * .9
     count_spread = tf.nn.softmax(self.log_count_spread, axis=1)
 
     logits = tf.reshape(self.logits, _broad_mix_shape)
     total_count = tf.reshape(library_sizes, _broad_data_shape) * tf.reshape(count_spread, _broad_mix_shape)
-    inflated_loc_probs = tf.reshape(inflated_loc_probs, _broad_inflation_shape)
+    inflated_loc_probs = tf.broadcast_to(inflated_loc_probs, _broad_inflation_shape)
     
     return tfp.distributions.ZeroInflatedNegativeBinomial(
         logits=logits,
