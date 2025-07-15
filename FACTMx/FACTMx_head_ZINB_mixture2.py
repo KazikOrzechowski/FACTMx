@@ -90,7 +90,7 @@ class FACTMx_head_ZINB_mixture2(FACTMx_head):
     self.t_vars = [*self.layers['mixture_logits'].trainable_variables,
                    *self.layers['encoder_classifier'].trainable_variables,
                    self.logits,
-                   self.log_total_count,
+                   self.log_count_spread,
                    self.inflated_loc_logits]
 
 
