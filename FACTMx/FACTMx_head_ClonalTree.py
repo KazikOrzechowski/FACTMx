@@ -144,7 +144,7 @@ class FACTMx_head_ClonalTree(FACTMx_head):
               
     log_loss = tf.reduce_sum(encoder_assignment_sample * log_like)
 
-    return tf.reduce_sum([kl_loss / _batch_size,
+    return tf.reduce_sum([kl_loss / _batch_size * self.prop_loss_scale,
                           log_loss / _batch_size,
                           *self.layers['logits'].losses,
                           *self.layers['encoder_classifier'].losses])
