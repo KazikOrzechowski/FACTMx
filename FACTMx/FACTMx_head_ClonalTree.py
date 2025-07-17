@@ -22,7 +22,7 @@ class FACTMx_head_ClonalTree(FACTMx_head):
                log_mut_assignment=None,
                layer_configs={'logits':'linear', 'encoder_classifier':'linear'},
                prob_obs=.5, prob_unobs=.01,
-               temperature=1E-2, eps=1E-10,
+               temperature=1E-2, eps=1E-5,
                prop_loss_scale=1.):
     super().__init__(dim, dim_latent, head_name)
     # dim clones should be tumour leaf clones +1 for the normal clone
@@ -67,17 +67,14 @@ class FACTMx_head_ClonalTree(FACTMx_head):
 
     # >>> initialise clones >>>
     self.all_tumour_clones = int(2 ** (self.levels+1) - 1)
-
+    
     if log_mut_assignment is None:
-      self.log_mut_assignment = tf.keras.Variable(tf.zeros((self.dim_pos, self.all_tumour_clones)),
-                                                  trainable=True,
-                                                  dtype=tf.float32,
-                                                  name=f'{head_name}_log_mut_assignment')
-    else:
-      self.log_mut_assignment = tf.keras.Variable(log_mut_assignment,
-                                                  trainable=True,
-                                                  dtype=tf.float32,
-                                                  name=f'{head_name}_log_mut_assignment')
+      log_mut_assignment = tf.keras.initializers.RandomNormal()((self.dim_pos, self.all_tumour_clones))
+      
+    self.log_mut_assignment = tf.keras.Variable(log_mut_assignment,
+                                                trainable=True,
+                                                dtype=tf.float32,
+                                                name=f'{head_name}_log_mut_assignment')
 
     self.level_shapes = [(self.dim_pos,) + (2,) * i + (1,) * (self.levels-i) for i in range(self.levels+1)]
     self.level_inds = [slice(2**i - 1, 2**(i+1)-1) for i in range(self.levels+1)]
@@ -99,7 +96,9 @@ class FACTMx_head_ClonalTree(FACTMx_head):
     return log_probs
 
   def get_clone_profiles_sample(self):
-    mut_assignment_sample = self.get_assignment_distribution(self.log_mut_assignment).sample()
+    mut_probs = tf.nn.softmax(self.log_mut_assignment, axis=-1) + self.eps
+    mut_assignment_sample = self.get_assignment_distribution(tf.math.log(mut_probs)).sample()
+    
     all_levels = [tf.reshape(mut_assignment_sample[:,inds], shape) for shape, inds in zip(self.level_shapes, self.level_inds)]
     all_levels = [tf.broadcast_to(level, self.level_shapes[-1]) for level in all_levels]
 
@@ -153,7 +152,7 @@ class FACTMx_head_ClonalTree(FACTMx_head):
     mut, counts = data
 
     assignment_logits = self.layers['encoder_classifier'](mut)
-    assignment_logits = tf.math.log(tf.math.exp(assignment_logits) + self.eps)
+    assignment_logits = tf.math.log(tf.nn.softmax(assignment_logits, axis=-1) + self.eps)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
     return {'encoder_input': assignment_logits,
