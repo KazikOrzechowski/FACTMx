@@ -86,7 +86,7 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
         logits = _logit_init(shape=_level_shape)
         logits_were_init = True
       if logits_were_init and level > 0:
-        logits += tf.expand_dims(self.level_logits[-1], axis=-1)
+        logits += tf.expand_dims(self.level_logits[-1], axis=-2)
       
       self.level_logits.append(tf.keras.Variable(logits,
                                                  trainable=True,
