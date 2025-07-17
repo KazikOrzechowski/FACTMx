@@ -80,19 +80,19 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
       _default_init = tf.keras.initializers.Zeros()
 
       logits = level_params.pop('logits', _logit_init(shape=_level_shape))
-      self.level_logits.append(tf.Variable(logits,
-                                           trainable=True,
-                                           dtype=tf.float32))
+      self.level_logits.append(tf.keras.Variable(logits,
+                                                 trainable=True,
+                                                 dtype=tf.float32))
 
       log_total_count = level_params.pop('log_total_count', _default_init(shape=_level_shape))
-      self.level_log_total_count.append(tf.Variable(log_total_count,
-                                                    trainable=True,
-                                                    dtype=tf.float32))
+      self.level_log_total_count.append(tf.keras.Variable(log_total_count,
+                                                          trainable=True,
+                                                          dtype=tf.float32))
 
       inflated_loc_logits = level_params.pop('inflated_loc_logits', _default_init(shape=_level_shape))
-      self.level_inflated_loc_logits.append(tf.Variable(inflated_loc_logits,
-                                                        trainable=True,
-                                                        dtype=tf.float32))
+      self.level_inflated_loc_logits.append(tf.keras.Variable(inflated_loc_logits,
+                                                              trainable=True,
+                                                              dtype=tf.float32))
     # <<< initialise mixtures <<<
 
     # get training variables
