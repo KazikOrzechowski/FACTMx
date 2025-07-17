@@ -138,8 +138,8 @@ class FACTMx_head_ClonalTree(FACTMx_head):
     _batch_size = data[0].shape[0]
     sample, log_like, log_probs = self.decode(latent, data)
 
-    kl_loss = tfp.distributions.Categorical(encoder_assignment_logits).kl_divergence(
-      tfp.distributions.Categorical(log_probs))
+    kl_loss = tfp.distributions.Categorical(logits=encoder_assignment_logits).kl_divergence(
+      tfp.distributions.Categorical(logits=log_probs))
     kl_loss = tf.reduce_sum(kl_loss)
               
     log_loss = tf.reduce_sum(encoder_assignment_sample * log_like)
