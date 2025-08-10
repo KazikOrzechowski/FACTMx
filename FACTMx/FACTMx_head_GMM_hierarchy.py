@@ -142,8 +142,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
       mixtures = self.get_mixture_distributions(level)
 
       log_likelihood = mixtures.log_prob(tf.expand_dims(data, 2))
-      log_likelihood = tf.reduce_sum(log_likelihood, axis=-1)
-
+      
       level_assignment_loglikelihoods.append(log_likelihood)
 
     return level_assignment_loglikelihoods, log_mixture_probs
