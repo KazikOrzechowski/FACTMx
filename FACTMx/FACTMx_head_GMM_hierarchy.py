@@ -90,7 +90,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
                                                trainable=True,
                                                dtype=tf.float32))
 
-      log_scale = level_params.pop('scale', _default_init(shape=_level_shape))
+      log_scale = level_params.pop('log_scale', _default_init(shape=_level_shape))
       self.level_log_scales.append(tf.keras.Variable(log_scale,
                                                      trainable=True,
                                                      dtype=tf.float32))
@@ -122,7 +122,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     loc = self.level_locs[level]
     loc = tf.reshape(loc, _flat_shape)
 
-    log_scale = self.level_log_scale[level]
+    log_scale = self.level_log_scales[level]
     log_scale = tf.reshape(log_scale, _flat_shape)
 
     scale_diag = tf.math.exp(log_scale) + self.eps
