@@ -128,9 +128,6 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     scale_diag = tf.math.exp(log_scale) + self.eps
     scale_diag = tf.linalg.diag(scale_diag)
 
-    print(loc.shape)
-    print(scale_diag.shape)
-
     return tfp.distributions.MultivariateNormalTriL(
         loc,
         scale_diag
