@@ -75,13 +75,14 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
 
     for level, level_params in enumerate(mixture_params_list):
       _level_shape = (dim_topics,) * (level+1) + (dim_normal,)
-      _default_init = tf.keras.initializers.RandomNormal(stddev=dim_topics ** (-3*level))
+      _loc_init = tf.keras.initializers.RandomNormal(stddev=dim_topics ** (-5*level))
+      _log_scale_init = tf.ones(_level_shape) * (-level-1)
 
       if 'loc' in level_params.keys():
         loc = level_params['loc']
         loc_was_init = False
       else:
-        loc = _default_init(shape=_level_shape)
+        loc = _loc_init(shape=_level_shape)
         loc_was_init = True
       if loc_was_init and level > 0:
         loc += tf.expand_dims(self.level_locs[-1], axis=-2)
@@ -90,7 +91,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
                                                trainable=True,
                                                dtype=tf.float32))
 
-      log_scale = level_params.pop('log_scale', _default_init(shape=_level_shape))
+      log_scale = level_params.pop('log_scale', _log_scale_init)
       self.level_log_scales.append(tf.keras.Variable(log_scale,
                                                      trainable=True,
                                                      dtype=tf.float32))
