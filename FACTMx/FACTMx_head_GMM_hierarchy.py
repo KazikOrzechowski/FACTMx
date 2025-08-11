@@ -136,7 +136,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     loc = self.level_locs[level]
     loc = tf.reshape(loc, _flat_shape)
 
-    log_scale = self.level_log_scale[level]
+    log_scale = self.level_log_scales[level]
     log_scale = tf.reshape(log_scale, _flat_shape)
     cov_diag_factor = tf.math.exp(log_scale) + self.eps
 
