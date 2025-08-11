@@ -141,7 +141,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     cov_diag_factor = tf.math.exp(log_scale) + self.eps
 
     cov_perturb_factor = self.level_cov_perturbs[level]
-    cov_perturb_factor = tf.reshape(cov_perturb, (-1, self.dim_normal, self.dim_cov_perturb))
+    cov_perturb_factor = tf.reshape(cov_perturb_factor, (-1, self.dim_normal, self.dim_cov_perturb))
 
     return tfp.distributions.MultivariateNormalDiagPlusLowRankCovariance(
         loc,
