@@ -33,7 +33,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     self.dim_normal = dim_normal
     self.dim_levels = dim_levels
     self.unfrozen_levels = dim_levels if unfrozen_levels is None else unfrozen_levels
-    self.dim_cov_perturb = min(n_cov_perturb, dim_normal)
+    self.dim_cov_perturb = min(dim_cov_perturb, dim_normal)
     self.temperature = temperature
     self.eps = eps
     self.prop_loss_scale = prop_loss_scale
