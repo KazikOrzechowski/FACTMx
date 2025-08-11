@@ -23,6 +23,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
                unfrozen_levels=None,
                layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
                mixture_params_list=None,
+               dim_cov_perturb=2,
                temperature=1E-4,
                eps=1E-3,
                prop_loss_scale=1.):
@@ -32,9 +33,11 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     self.dim_normal = dim_normal
     self.dim_levels = dim_levels
     self.unfrozen_levels = dim_levels if unfrozen_levels is None else unfrozen_levels
+    self.dim_cov_perturb = min(n_cov_perturb, dim_normal)
     self.temperature = temperature
     self.eps = eps
     self.prop_loss_scale = prop_loss_scale
+      
 
     # >>> initialise layers >>>
     mixture_logits_config = layer_configs.pop('mixture_logits', 'linear')
@@ -72,9 +75,11 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
 
     self.level_locs = []
     self.level_log_scales = []
+    self.level_cov_perturbs = []
 
     for level, level_params in enumerate(mixture_params_list):
       _level_shape = (dim_topics,) * (level+1) + (dim_normal,)
+      _level_perturb_shape = _level_shape + (dim_cov_perturb,)
       _loc_init = tf.keras.initializers.Orthogonal(gain=dim_normal * dim_topics ** (-level-.5))
       _log_scale_init = tf.ones(_level_shape) * (-level)
 
@@ -97,13 +102,19 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
                                                      name=f'{head_name}_logscales_{level}',
                                                      trainable=True,
                                                      dtype=tf.float32))
+
+      cov_perturb = level_params.pop('cov_perturb', _default_init(shape=_level_perturb_shape))
+      self.level_cov_perturbs.append(tf.keras.Variable(cov_perturb,
+                                                       trainable=True,
+                                                       dtype=tf.float32))
     # <<< initialise mixtures <<<
 
     # get training variables
     self.t_vars = [*self.layers['mixture_logits'].trainable_variables,
                    *self.layers['encoder_classifier'].trainable_variables,
                    *self.level_locs,
-                   *self.level_log_scales]
+                   *self.level_log_scales,
+                   *self.level_cov_perturbs]
 
 
   def get_assignment_distribution(self, logits):
@@ -125,17 +136,18 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     loc = self.level_locs[level]
     loc = tf.reshape(loc, _flat_shape)
 
-    log_scale = self.level_log_scales[level]
+    log_scale = self.level_log_scale[level]
     log_scale = tf.reshape(log_scale, _flat_shape)
+    cov_diag_factor = tf.math.exp(log_scale) + self.eps
 
-    scale_diag = tf.math.exp(log_scale) + self.eps
-    scale_diag = tf.linalg.diag(scale_diag)
+    cov_perturb_factor = self.level_cov_perturbs[level]
+    cov_perturb_factor = tf.reshape(cov_perturb, (-1, self.dim_normal, self.dim_cov_perturb))
 
-    return tfp.distributions.MultivariateNormalTriL(
+    return tfp.distributions.MultivariateNormalDiagPlusLowRankCovariance(
         loc,
-        scale_diag
+        cov_diag_factor,
+        cov_perturb_factor
     )
-
 
   def decode(self, latent, data):
     log_mixture_probs = self.decode_log_mixture_probs(latent)
@@ -218,8 +230,10 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
           {
           'loc':loc.numpy().tolist(),
           'log_scale':log_scale.numpy().tolist(),
-          } for loc, log_scale in zip(self.level_locs, 
-                                      self.level_log_scales)
+          'cov_perturb':cov_perturb.numpy().tolist()
+          } for loc, log_scale, cov_perturb in zip(self.level_locs,
+                                                   self.level_log_scales,
+                                                   self.level_cov_perturbs)
         ],
     }
     return config
