@@ -88,11 +88,13 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
         loc += tf.expand_dims(self.level_locs[-1], axis=-2)
       
       self.level_locs.append(tf.keras.Variable(loc,
+                                               name=f'{head_name}_locs_{level}',
                                                trainable=True,
                                                dtype=tf.float32))
 
       log_scale = level_params.pop('log_scale', _log_scale_init)
       self.level_log_scales.append(tf.keras.Variable(log_scale,
+                                                     name=name=f'{head_name}_logscales_{level}',
                                                      trainable=True,
                                                      dtype=tf.float32))
     # <<< initialise mixtures <<<
