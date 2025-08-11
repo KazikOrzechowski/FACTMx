@@ -94,7 +94,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
 
       log_scale = level_params.pop('log_scale', _log_scale_init)
       self.level_log_scales.append(tf.keras.Variable(log_scale,
-                                                     name=name=f'{head_name}_logscales_{level}',
+                                                     name=f'{head_name}_logscales_{level}',
                                                      trainable=True,
                                                      dtype=tf.float32))
     # <<< initialise mixtures <<<
