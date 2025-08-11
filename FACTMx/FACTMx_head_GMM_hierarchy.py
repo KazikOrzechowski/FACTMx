@@ -76,7 +76,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     for level, level_params in enumerate(mixture_params_list):
       _level_shape = (dim_topics,) * (level+1) + (dim_normal,)
       _loc_init = tf.keras.initializers.RandomNormal(stddev=dim_topics ** (-level))
-      _log_scale_init = tf.ones(_level_shape) * (-level-2)
+      _log_scale_init = tf.ones(_level_shape) * (-level-3)
 
       if 'loc' in level_params.keys():
         loc = level_params['loc']
