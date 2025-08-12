@@ -37,7 +37,7 @@ class QuadraticFeatures(keras.layers.Layer):
     inputs = tf.expand_dims(inputs, -1)
     
     outputs = self.Dot([inputs, inputs])
-    outputs = tf.reshape(outputs, _preshape + [_last ** 2,])
+    outputs = tf.reshape(outputs, shape=_preshape + [_last ** 2,])
     return outputs
 
   def get_prunable_weights(self):
