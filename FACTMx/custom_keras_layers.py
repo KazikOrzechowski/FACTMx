@@ -42,8 +42,8 @@ class QuadraticFeatures(keras.layers.Layer):
     return outputs
 
   def compute_output_shape(self, input_shape):
-      *_preshape, _last = input_shape
-      return (*preshape, _last ** 2)
+      *batch, dim_features = input_shape
+      return (*batch, dim_features ** 2)
 
   def get_prunable_weights(self):
     return []
