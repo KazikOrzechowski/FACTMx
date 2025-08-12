@@ -47,5 +47,8 @@ class QuadraticFeatures(keras.layers.Layer):
       *batch, dim_features = input_shape
       return (*batch, dim_features ** 2)
 
+  def build(self, input_shape):
+      super(QuadraticFeatures, self).build(input_shape)
+
   def get_prunable_weights(self):
     return []
