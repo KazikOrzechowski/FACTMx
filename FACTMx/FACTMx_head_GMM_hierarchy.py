@@ -26,7 +26,8 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
                dim_cov_perturb=2,
                temperature=1E-4,
                eps=1E-3,
-               prop_loss_scale=1.):
+               prop_loss_scale=1.,
+               use_dot_classifier=False):
     super().__init__(dim, dim_latent, head_name)
 
     self.dim_topics = dim_topics
@@ -37,6 +38,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     self.temperature = temperature
     self.eps = eps
     self.prop_loss_scale = prop_loss_scale
+    self.use_dot_classifier = use_dot_classifier
       
 
     # >>> initialise layers >>>
@@ -63,7 +65,8 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     else:
       self.layers['encoder_classifier'] = tf.keras.Sequential.from_config(encoder_classifier_config)
 
-    assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_normal)
+    if not use_dot_classifier:
+      assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_normal)
     assert self.layers['encoder_classifier'].output_shape == (None, None, self.dim)
     # <<< initialise layers <<<
 
@@ -204,7 +207,11 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
 
 
   def encode(self, data):
-    assignment_logits = self.layers['encoder_classifier'](data)
+    if self.use_dot_classifier:
+      data = tf.expand_dims(data,-1)
+      assignment_logits = self.layers['encoder_classifier']([data, data])
+    else:
+      assignment_logits = self.layers['encoder_classifier'](data)
     assignment_logits = tf.math.log(tf.math.exp(assignment_logits) + self.eps)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
@@ -229,6 +236,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
         'head_type':self.head_type,
         'temperature':self.temperature,
         'prop_loss_scale':self.prop_loss_scale,
+        'use_dot_classifier':self.use_dot_classifier,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
         'mixture_params_list':[
           {
