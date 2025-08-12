@@ -81,8 +81,8 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
       _level_shape = (dim_topics,) * (level+1) + (dim_normal,)
       _level_perturb_shape = _level_shape + (dim_cov_perturb,)
       
-      _loc_init = tf.keras.initializers.Orthogonal(gain=dim_normal * dim_topics ** (-level-.5))(shape=_level_shape)
-      _scale_init = tf.keras.initializers.Ones()(_level_shape) * (-level)
+      _loc_init = tf.keras.initializers.Orthogonal(gain=dim_normal * dim_topics ** (-level-.75))(shape=_level_shape)
+      _log_scale_init = tf.keras.initializers.Ones()(_level_shape) * (-level)
       _perturb_init = tf.keras.initializers.RandomUniform(-1, 1)(_level_perturb_shape) * np.exp(-level-1)
       
       if 'loc' in level_params.keys():
@@ -99,7 +99,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
                                                trainable=True,
                                                dtype=tf.float32))
 
-      log_scale = level_params.pop('log_scale', _scale_init)
+      log_scale = level_params.pop('log_scale', _log_scale_init)
       self.level_log_scales.append(tf.keras.Variable(log_scale,
                                                      name=f'{head_name}_logscales_{level}',
                                                      trainable=True,
