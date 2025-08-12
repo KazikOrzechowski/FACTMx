@@ -1,3 +1,4 @@
+import tensorflow as tf
 try:
   from tensorflow_model_optimization.python.core.keras.compat import keras
 except ImportError:
@@ -34,7 +35,7 @@ class QuadraticFeatures(keras.layers.Layer):
     self.Dot = keras.layers.Dot(axes=-1)
 
   def call(self, inputs):
-    inputs = tensorflow.expand_dims(inputs, -1)
+    inputs = tf.expand_dims(inputs, -1)
     return self.Dot([inputs, inputs])
 
   def get_prunable_weights(self):
