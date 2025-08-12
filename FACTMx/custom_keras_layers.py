@@ -35,7 +35,7 @@ class QuadraticFeatures(keras.layers.Layer):
     *batch, dim_features = list(inputs.shape)
     _output_shape = [*batch, -1]
 
-    if len(inputs_shape) > 2:
+    if len(inputs.shape) > 2:
       inputs = tf.reshape(inputs, (-1, dim_features))
     inputs = tf.expand_dims(inputs, -1)
     
