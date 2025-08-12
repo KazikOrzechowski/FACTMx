@@ -23,3 +23,19 @@ class ConstantResponse(keras.layers.Layer):
 
   def get_prunable_weights(self):
     return []
+
+
+
+@keras.utils.register_keras_serializable()
+class QuadraticFeatures(keras.layers.Layer):
+  def __init__(self,
+               **kwargs):
+    super().__init__()
+    self.Dot = keras.layers.Dot(axis=-1)
+
+  def call(self, inputs):
+    inputs = tensorflow.expand_dims(inputs, -1)
+    return self.Dot([inputs, inputs])
+
+  def get_prunable_weights(self):
+    return []
