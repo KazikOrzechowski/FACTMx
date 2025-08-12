@@ -31,7 +31,7 @@ class QuadraticFeatures(keras.layers.Layer):
   def __init__(self,
                **kwargs):
     super().__init__()
-    self.Dot = keras.layers.Dot(axis=-1)
+    self.Dot = keras.layers.Dot(axes=-1)
 
   def call(self, inputs):
     inputs = tensorflow.expand_dims(inputs, -1)
