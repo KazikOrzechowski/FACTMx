@@ -32,9 +32,11 @@ class QuadraticFeatures(keras.layers.Layer):
     self.Dot = keras.layers.Dot(axes=-1)
 
   def call(self, inputs):
-    _output_shape = list(inputs.shape)
-    _output_shape[-1] = -1
-    
+    *batch, dim_features = list(inputs.shape)
+    _output_shape = [*batch, -1]
+
+    if len(inputs_shape) > 2:
+      inputs = tf.reshape(inputs, (-1, dim_features))
     inputs = tf.expand_dims(inputs, -1)
     
     outputs = self.Dot([inputs, inputs])
