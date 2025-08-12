@@ -223,6 +223,7 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
         'dim_normal':self.dim_normal,
         'dim_topics':self.dim_topics,
         'dim_levels':self.dim_levels,
+        'dim_cov_perturb':self.dim_cov_perturb,
         'unfrozen_levels':self.unfrozen_levels,
         'head_name':self.head_name,
         'head_type':self.head_type,
