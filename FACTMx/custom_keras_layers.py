@@ -33,7 +33,7 @@ class QuadraticFeatures(keras.layers.Layer):
 
   def call(self, inputs):
     *_preshape, _last = inputs.shape
-    _outputs_shape = _preshape + [_last ** 2,]
+    _outputs_shape = _preshape + [int(_last ** 2),]
     
     inputs = tf.expand_dims(inputs, -1)
     
