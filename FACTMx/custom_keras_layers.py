@@ -1,8 +1,5 @@
 import tensorflow as tf
-try:
-  from tensorflow_model_optimization.python.core.keras.compat import keras
-except ImportError:
-  import tensorflow.keras as keras
+import tensorflow.keras as keras
 
 @keras.utils.register_keras_serializable()
 class ConstantResponse(keras.layers.Layer):
