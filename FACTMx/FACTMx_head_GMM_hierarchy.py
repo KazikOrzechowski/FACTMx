@@ -185,8 +185,9 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     level_loglikelihoods = []
     for level in range(self.dim_levels-1, -1, -1):
       if level < self.unfrozen_levels:
+        probs = tf.math.exp(encoder_assignment_logits)
         log_likelihood = tf.reduce_sum(
-            tf.math.multiply(encoder_assignment_sample, level_assignment_loglikelihoods[level]),
+            tf.math.multiply(probs, level_assignment_loglikelihoods[level]),
         )
   
         level_loglikelihoods.append(log_likelihood)
