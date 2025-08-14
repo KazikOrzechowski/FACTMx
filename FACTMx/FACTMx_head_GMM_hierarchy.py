@@ -183,17 +183,17 @@ class FACTMx_head_GMM_hierarchy(FACTMx_head):
     )
 
     level_loglikelihoods = []
+    probs = tf.math.exp(encoder_assignment_logits)
     for level in range(self.dim_levels-1, -1, -1):
       if level < self.unfrozen_levels:
-        probs = tf.math.exp(encoder_assignment_logits)
         log_likelihood = tf.reduce_sum(
             tf.math.multiply(probs, level_assignment_loglikelihoods[level]),
         )
   
         level_loglikelihoods.append(log_likelihood)
 
-      encoder_assignment_sample = tf.reshape(encoder_assignment_sample, (_batch_size, _subbatch_size, -1, self.dim_topics))
-      encoder_assignment_sample = tf.reduce_sum(encoder_assignment_sample, axis=-1)
+      probs = tf.reshape(probs, (_batch_size, _subbatch_size, -1, self.dim_topics))
+      probs = tf.reduce_sum(probs, axis=-1)
 
     kl_loss = kl_divergence * self.prop_loss_scale / _batch_size
     ll_loss = -tf.reduce_sum(level_loglikelihoods) / _batch_size
