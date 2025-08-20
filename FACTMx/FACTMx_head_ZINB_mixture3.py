@@ -177,14 +177,11 @@ class FACTMx_head_ZINB_mixture3(FACTMx_head):
     marker_loss = tf.constant(0.)
     if self.marker_groups is not None:
       probs = tf.math.sigmoid(self.logits)
-      probs = tf.expand_dims(probs, 1)
       
-      markers = [tf.gather(probs, marker_inds, axis=-1) for marker_inds, _ in self.marker_groups]
-      antagonists = [tf.gather(probs, antagonist_inds, axis=-1) for _, antagonist_inds in self.marker_groups]
+      markers = [tf.reduce_mean(tf.gather(probs, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
+      antagonists = [tf.reduce_mean(tf.gather(probs, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
 
-      for pair in zip(markers, antagonists):
-        pair_loss = tf.keras.layers.Dot(axes=1)(pair)
-        marker_loss += tf.reduce_mean(pair_loss) 
+      marker_loss = tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists))
 
     return tf.reduce_sum([self.prop_loss_scale*kl_loss,
                           ll_loss,
