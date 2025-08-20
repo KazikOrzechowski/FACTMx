@@ -127,7 +127,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
            encoder_assignment_sample, 
            encoder_assignment_logits, 
            beta=1):
-    _, assignment_logits, log_topic_proportions = FACTMx_head_FlexTopicModel.decode(self, latent, data, sample=False)
+    _, assignment_logits, log_topic_proportions = FACTMx_head_TopicModel.decode(self, latent, data, sample=False)
 
     q_logits = tf.math.subtract(assignment_logits, log_topic_proportions)
 
