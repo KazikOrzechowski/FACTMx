@@ -56,6 +56,14 @@ class FACTMx_model(tf.Module):
     head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
     return self.encoder.encode(tf.concat(head_encoded, axis=1)), head_kwargs
 
+  def get_latent_representation(self, data):
+    #deterministic encoder
+    head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
+    head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
+
+    loc, _ = self.encoder.encode_params(tf.concat(head_encoded, axis=1))
+    return loc
+
   def decode(self, latent, data):
     return [head.decode(latent, data[i]) for i, head in enumerate(self.heads)]
 
