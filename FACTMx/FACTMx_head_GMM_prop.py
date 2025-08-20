@@ -119,7 +119,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
   def decode_mixture_logits(self, latent):
     # minimum topic proportion is EPS
     mixture_logits = self.layers['mixture_logits'](latent) 
-    mixture_logits = tf.clamp_by_value(mixture_logits, LOGIT_MIN, LOGIT_MAX)
+    mixture_logits = tf.clip_by_value(mixture_logits, LOGIT_MIN, LOGIT_MAX)
     
     return mixture_logits
 
