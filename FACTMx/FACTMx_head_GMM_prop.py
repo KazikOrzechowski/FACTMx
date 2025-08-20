@@ -115,15 +115,15 @@ class FACTMx_head_GMM_prop(FACTMx_head):
         self.mixture_cov_perturb
     )
 
-
+  
   def decode_mixture_logits(self, latent):
-    # minimum topic proportion is EPS
     mixture_logits = self.layers['mixture_logits'](latent) 
-    mixture_logits = tf.clip_by_value(mixture_logits, LOGIT_MIN, LOGIT_MAX)
-    
-    return mixture_logits
 
+    # minimum topic proportion is EPS
+    log_eps = tf.constant(tf.math.log(self.eps), shape=mixture_logits.shape)
+    return tf.reduce_logsumexp(tf.stack([mixture_logits, log_eps]), axis=0)
 
+  
   def decode(self, latent, data, sample=True):
     mixture_logits = self.decode_mixture_logits(latent)
     mixture_logits = tf.reshape(mixture_logits, (-1, 1, self.dim))
