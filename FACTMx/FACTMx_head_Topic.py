@@ -102,9 +102,10 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
   def decode_log_topic_proportions(self, latent):
     #minimal topic proportions should be around eps
-    topic_proportions = self.layers['mixture_logits'](latent) + self.eps
-
-    return tf.math.log(topic_proportions)
+    log_topic_proportions = self.layers['mixture_logits'](latent) 
+    log_topic_proportions = tf.clip_by_value(log_topic_proportions, -5, 5)
+    
+    return log_topic_proportions
 
 
   def decode(self, latent, data, sample=True):
