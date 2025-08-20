@@ -267,4 +267,4 @@ class FACTMx_head_FlexTopicModel(FACTMx_head):
     return config
 
   def from_config(config):
-    return FACTMx_head_TopicModel(**config)
+    return FACTMx_head_FlexTopicModel(**config)
