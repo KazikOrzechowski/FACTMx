@@ -109,7 +109,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
   def decode(self, latent, data, sample=True):
     log_topic_proportions = self.decode_log_topic_proportions(latent)
-    log_topic_proportions = tf.reshape(log_topic_proportions, (-1, 1, self.dim+1))
+    log_topic_proportions = tf.reshape(log_topic_proportions, (-1, 1, self.dim))
 
     log_topic_profiles = self.get_log_topic_profiles()
 
