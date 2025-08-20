@@ -7,77 +7,66 @@ from typing import Tuple
 from FACTMx.FACTMx_head import FACTMx_head
 
 
-def ragged_mat_mul(ragged_tensor, matrix):
-  
-  output_signature = tf.RaggedTensorSpec(shape=[None, None],
-                                         ragged_rank=0)
-  ragged_mul_function = lambda x: tf.cast(tf.reshape(x, (-1, matrix.shape[0])), tf.float32) @ tf.cast(matrix, tf.float32)
-  
-  return tf.map_fn(
-    ragged_mul_function,
-    ragged_tensor,
-    fn_output_signature=output_signature
-  )
-
-
-def ragged_KL_divergence(ragged_logits, 
-                         second_logits, 
-                         distribution_function):
-  
-  output_signature = tf.RaggedTensorSpec(shape=[None, ], 
-                                         dtype=tf.float32,
-                                         ragged_rank=0)
-
-  ragged_KL = lambda x: distribution_function(logits=x[0]).kl_divergence(distribution_function(logits=x[1]))
-
-  return tf.map_fn(
-    ragged_KL,
-    tf.stack([ragged_logits, second_logits], axis=1),
-    fn_output_signature=output_signature
-  )
-
-
-
 class FACTMx_head_TopicModel(FACTMx_head):
   head_type='TopicModel'
 
   def __init__(self,
                dim, dim_latent, dim_words,
                head_name,
-               decode_config='linear',
-               ragged=False,
+               layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
                topic_profiles=None,
                topic_L2_penalty=None,
                proportions_L2_penalty=None,
+               prop_loss_scale=1.,
+               eps=1E-3,
                temperature=1E-4):
     super().__init__(dim, dim_latent, head_name)
-    self.eps = 1E-5
+                 
+    self.eps = eps
     self.dim_words = dim_words
-    self.ragged = ragged
     self.topic_L2_penalty = topic_L2_penalty
     self.proportions_L2_penalty = proportions_L2_penalty
+    self.prop_loss_scale = prop_loss_scale
     self.temperature = temperature
-
-    if decode_config == 'linear':
-      self.decode_model = tf.keras.Sequential(
-                            [tf.keras.Input(shape=(self.dim_latent,)),
-                             tf.keras.layers.Dense(units=self.dim,
-                                                   kernel_initializer='orthogonal')]
-                          )
+    
+    # >>> initialise layers >>>
+    mixture_logits_config = layer_configs.pop('mixture_logits', 'linear')
+    if mixture_logits_config == 'linear':
+      self.layers['mixture_logits'] = tf.keras.Sequential(
+                                        [tf.keras.Input(shape=(self.dim_latent,)),
+                                         tf.keras.layers.Dense(units=self.dim,
+                                                               activation='log_softmax',
+                                                               kernel_initializer='orthogonal')]
+                                      )
     else:
-      self.decode_model = tf.keras.Sequential.from_config(decode_config)
+      self.layers['mixture_logits'] = tf.keras.Sequential.from_config(mixture_logits_config)
 
-    assert self.decode_model.output_shape == (None, self.dim)
-    assert self.decode_model.input_shape == (None, self.dim_latent)
+    assert self.layers['mixture_logits'].output_shape == (None, self.dim)
+    assert self.layers['mixture_logits'].input_shape == (None, self.dim_latent)
+
+    encoder_classifier_config = layer_configs.pop('encoder_classifier', 'linear')
+    if encoder_classifier_config == 'linear':
+      self.layers['encoder_classifier'] = tf.keras.Sequential(
+                                            [tf.keras.Input(shape=(None, self.dim_words)),
+                                             tf.keras.layers.Dense(units=self.dim,
+                                                                   activation='log_softmax')]
+                                          )
+    else:
+      self.layers['encoder_classifier'] = tf.keras.Sequential.from_config(encoder_classifier_config)
+
+    assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_words)
+    assert self.layers['encoder_classifier'].output_shape == (None, None, self.dim)
+    # <<< initialise layers <<<
 
     #log proportions in topic profiles, with respect to fixed proportion of word0
     if topic_profiles is None:
-      topic_profiles = tf.keras.initializers.Orthogonal()(shape=(dim_words-1, dim+1))
+      topic_profiles = tf.keras.initializers.Orthogonal()(shape=(dim_words-1, dim))
     self.topic_profiles_trainable = tf.keras.Variable(topic_profiles, 
                                                       trainable=True,
                                                       dtype=tf.float32)
 
-    self.t_vars = [*self.decode_model.trainable_variables,
+    self.t_vars = [*self.layers['mixture_logits'].trainable_variables,
+                   *self.layers['encoder_classifier'].trainable_variables,
                    self.topic_profiles_trainable]
 
 
@@ -86,30 +75,16 @@ class FACTMx_head_TopicModel(FACTMx_head):
                                                       temperature=self.temperature)
 
   
-  def get_ragged_assignments(self, ragged_logits):
-    output_signature = tf.RaggedTensorSpec(shape=[None, None], 
-                                           dtype=tf.float32,
-                                           ragged_rank=0)
-
-    ragged_sampling = lambda x: self.get_assignment_distribution(x).sample()
-
-    return tf.map_fn(
-      ragged_sampling,
-      ragged_logits,
-      fn_output_signature=output_signature
-    )
-
-  
   def get_log_topic_profiles(self):
     paddings_profiles = tf.constant([[1, 0], [0, 0]])
     log_topic_profiles = tf.pad(self.topic_profiles_trainable,
                                 paddings_profiles,
                                 'CONSTANT')
-    log_topic_profiles = tf.keras.activations.log_softmax(log_topic_profiles,
-                                                          axis=0)
+    log_topic_profiles = tf.math.log(
+      tf.keras.activations.softmax(log_topic_profiles, axis=0)
+    )
     return log_topic_profiles
 
-  
   def get_topic_profiles(self):
     return tf.math.exp(self.get_log_topic_profiles())
 
@@ -126,76 +101,67 @@ class FACTMx_head_TopicModel(FACTMx_head):
       return self.proportions_L2_penalty * tf.reduce_sum(tf.math.exp(2 * log_topic_proportions))
 
   def decode_log_topic_proportions(self, latent):
-    paddings_proportions = tf.constant([[0, 0], [1, 0]])
-    log_topic_proportions = tf.pad(self.decode_model(latent),
-                                   paddings_proportions,
-                                   'CONSTANT')
-    log_topic_proportions = tf.keras.activations.log_softmax(log_topic_proportions,
-                                                             axis=-1)
-    return log_topic_proportions
+    #minimal topic proportions should be around eps
+    topic_proportions = self.layers['mixture_logits'](latent) + self.eps
+
+    return tf.math.log(topic_proportions)
 
 
-  def decode(self, latent, data):
+  def decode(self, latent, data, sample=True):
     log_topic_proportions = self.decode_log_topic_proportions(latent)
-    log_topic_proportions = tf.reshape(log_topic_proportions,
-                                       (-1, 1, self.dim+1))
+    log_topic_proportions = tf.reshape(log_topic_proportions, (-1, 1, self.dim+1))
 
     log_topic_profiles = self.get_log_topic_profiles()
 
-    log_likelihoods = tf.matmul(data, log_topic_profiles) if not self.ragged else ragged_mat_mul(data, log_topic_profiles)
+    log_likelihoods = tf.matmul(data, log_topic_profiles)
 
     assignment_logits = tf.math.add(log_topic_proportions, log_likelihoods)
-    assignment_sample = self.get_assignment_distribution(assignment_logits).sample() if not self.ragged else self.get_ragged_assignments(assignment_logits)
+    assignment_sample = self.get_assignment_distribution(assignment_logits).sample() if sample else None
 
     return assignment_sample, assignment_logits, log_topic_proportions
 
 
-  def loss(self, data, latent, assignment_sample, beta=1):
-    _, assignment_logits, log_topic_props = self.decode(latent, data)
+  def loss(self, 
+           data, 
+           latent, 
+           encoder_assignment_sample, 
+           encoder_assignment_logits, 
+           beta=1):
+    _, assignment_logits, log_topic_proportions = FACTMx_head_FlexTopicModel.decode(self, latent, data, sample=False)
 
-    q_logits = tf.math.subtract(assignment_logits, log_topic_props)
+    q_logits = tf.math.subtract(assignment_logits, log_topic_proportions)
 
-    if not self.ragged:
-      kl_divergence = tf.reduce_sum(
-          tfp.distributions.OneHotCategorical(logits=q_logits).kl_divergence(
-              tfp.distributions.OneHotCategorical(logits=log_topic_props)
-              )
-      )
-    else:
-      kl_divergence = tf.reduce_sum(
-        ragged_KL_divergence(q_logits, 
-                             log_topic_props, 
-                             tfp.distributions.OneHotCategorical)
-      )
+    kl_divergence = tf.reduce_sum(
+        tfp.distributions.OneHotCategorical(logits=encoder_assignment_logits).kl_divergence(
+            tfp.distributions.OneHotCategorical(logits=log_topic_proportions)
+            )
+    )
 
     log_likelihood = tf.reduce_sum(
-        tf.math.multiply(assignment_sample, q_logits),
+        tf.math.multiply(encoder_assignment_sample, q_logits),
         #axis=2
     )
     #log_likelihood = tf.reduce_mean(log_likelihood)
-
     batch_size = data.shape[0]
     
-    return tf.reduce_sum([beta*kl_divergence/batch_size, 
+    return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size, 
                           -log_likelihood/batch_size,
                           self.get_topic_regularization_loss(),
-                          self.get_proportions_regularization_loss(log_topic_props),
-                          *self.decode_model.losses])
+                          self.get_proportions_regularization_loss(log_topic_proportions),
+                          *self.layers['mixture_logits'].losses,
+                          *self.layers['encoder_classifier'].losses])
 
 
   def encode(self, data):
-    log_topic_profiles = self.get_log_topic_profiles()
-
-    assignment_logits = tf.matmul(data, log_topic_profiles) if not self.ragged else ragged_mat_mul(data, log_topic_profiles)
-    assignment_sample = self.get_assignment_distribution(assignment_logits).sample() if not self.ragged else self.get_ragged_assignments(assignment_logits)
+    assignment_logits = self.layers['encoder_classifier'](data) 
+    assignment_sample = self.get_assignment_distribution(assignment_logits).sample() 
 
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
-    log_proportions_sample = tf.math.log(proportions_sample)
-
-    encoder_input = log_proportions_sample[:,1:] - tf.reshape(log_proportions_sample[:,0], (-1, 1))
+    encoder_input = tf.math.log(proportions_sample)
 
     return {'encoder_input': encoder_input,
-            'assignment_sample': assignment_sample}
+            'encoder_assignment_sample': assignment_sample,
+            'encoder_assignment_logits': assignment_logits}
 
 
   def get_config(self):
@@ -205,20 +171,15 @@ class FACTMx_head_TopicModel(FACTMx_head):
         'dim_words':self.dim_words,
         'head_name':self.head_name,
         'head_type':self.head_type,
-        'ragged':self.ragged,
         'temperature':self.temperature,
+        'eps':self.eps,
+        'prop_loss_scale':self.prop_loss_scale,
         'topic_profiles':self.topic_profiles_trainable.numpy().tolist(),
         'topic_L2_penalty':self.topic_L2_penalty,
         'proportions_L2_penalty':self.proportions_L2_penalty,
-        'decode_config':self.decode_model.get_config()
+        "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
     }
     return config
 
   def from_config(config):
     return FACTMx_head_TopicModel(**config)
-
-  def save_weights(self, head_path):
-    self.decode_model.save_weights(f'{head_path}.weights.h5')
-
-  def load_weights(self, head_path):
-    self.decode_model.load_weights(f'{head_path}.weights.h5')
