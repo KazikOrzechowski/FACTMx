@@ -144,7 +144,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
             encoder_assignment_sample,
             encoder_assignment_logits,
             beta=1):
-    _, assignment_logits, mixture_logits = FACTMx_head_GMM.decode(self, latent, data, sample=False)
+    _, assignment_logits, mixture_logits = FACTMx_head_GMM_prop.decode(self, latent, data, sample=False)
 
     log_likelihoods = tf.math.subtract(assignment_logits, mixture_logits)
 
