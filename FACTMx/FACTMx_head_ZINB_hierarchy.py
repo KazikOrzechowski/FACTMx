@@ -140,7 +140,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
     return tfp.distributions.ZeroInflatedNegativeBinomial(
         probs=tf.reshape(probs, _flat_shape),
         total_count=tf.reshape(total_count, _flat_shape),
-        inflated_loc_probs=tf.reshape(inflated_loc_probs, _flat_shape),
+        inflated_loc_probs=tf.broadcast_to(inflated_loc_probs, _flat_shape),
         require_integer_total_count=False,
     )
 
