@@ -26,7 +26,7 @@ class FACTMx_head_ZINB_hierarchy3(FACTMx_head):
                mixture_params_list=None,
                temperature=1E-4,
                eps=1E-3,
-               prop_loss_scale=1.):
+               prop_loss_scale=1., marker_loss_scale=.01):
     super().__init__(dim, dim_latent, head_name)
 
     self.dim_topics = dim_topics
@@ -37,6 +37,7 @@ class FACTMx_head_ZINB_hierarchy3(FACTMx_head):
     self.temperature = temperature
     self.eps = eps
     self.prop_loss_scale = prop_loss_scale
+    self.marker_loss_scale = marker_loss_scale
 
     # >>> initialise layers >>>
     mixture_logits_config = layer_configs.pop('mixture_logits', 'linear')
@@ -202,7 +203,7 @@ class FACTMx_head_ZINB_hierarchy3(FACTMx_head):
 
     return tf.reduce_sum([kl_loss,
                           ll_loss,
-                          marker_loss,
+                          marker_loss * marker_loss_scale,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
 
@@ -233,6 +234,7 @@ class FACTMx_head_ZINB_hierarchy3(FACTMx_head):
         'head_type':self.head_type,
         'temperature':self.temperature,
         'prop_loss_scale':self.prop_loss_scale,
+        'marker_loss_scale':self.marker_loss_scale,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
         'mixture_params_list':[
           {
