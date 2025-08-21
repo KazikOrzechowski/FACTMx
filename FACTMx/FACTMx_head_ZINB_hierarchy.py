@@ -211,7 +211,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
 
     return tf.reduce_sum([kl_loss,
                           ll_loss,
-                          marker_loss * marker_loss_scale,
+                          marker_loss * self.marker_loss_scale,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
 
