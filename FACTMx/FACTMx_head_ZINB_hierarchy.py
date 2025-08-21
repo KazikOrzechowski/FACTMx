@@ -104,7 +104,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
       inflated_loc_logits = tf.zeros(shape=(dim_counts,))
     self.inflated_loc_logits = tf.keras.Variable(inflated_loc_logits,
                                                   trainable=True,
-                                                  dtype=tf.float32))
+                                                  dtype=tf.float32)
     # <<< initialise mixtures <<<
 
     # get training variables
