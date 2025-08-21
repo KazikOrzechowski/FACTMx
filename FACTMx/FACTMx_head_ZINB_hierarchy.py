@@ -244,7 +244,7 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
         'prop_loss_scale':self.prop_loss_scale,
         'marker_loss_scale':self.marker_loss_scale,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
-        'inflated_loc_logits':self.inflated_loc_logits,
+        'inflated_loc_logits':self.inflated_loc_logits.numpy().tolist(),
         'mixture_params_list':[
           {
           'logits':logits.numpy().tolist(),
