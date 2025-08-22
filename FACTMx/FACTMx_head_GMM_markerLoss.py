@@ -165,7 +165,7 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
     for level in range(self.unfrozen_levels):
       mixtures = self.get_mixture_distributions(level)
 
-      log_likelihood = mixtures.log_prob(tf.expand_dims(data, 2))
+      log_likelihood = mixtures.log_prob(tf.expand_dims(normal_data, 2))
       
       level_assignment_loglikelihoods.append(log_likelihood)
 
