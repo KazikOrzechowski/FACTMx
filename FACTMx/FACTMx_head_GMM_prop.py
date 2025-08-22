@@ -12,8 +12,6 @@ except ImportError:
 
 from FACTMx.FACTMx_head import FACTMx_head
 
-LOGIT_MIN, LOGIT_MAX = (-5, 5)
-
 
 class FACTMx_head_GMM_prop(FACTMx_head):
   head_type = 'GMM_prop'
@@ -153,7 +151,10 @@ class FACTMx_head_GMM_prop(FACTMx_head):
               tfp.distributions.OneHotCategorical(logits=mixture_logits)
               )
     )
-
+    
+    #alternate sampling and marginal loss
+    if np.random.choice([True, False]):
+      encoder_assignment_sample = tf.math.softmax(encoder_assignment_logits, axis=-1)
     log_likelihood = tf.reduce_sum(
         tf.math.multiply(encoder_assignment_sample, log_likelihoods),
         #axis=2
