@@ -176,6 +176,10 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
               )
     )
 
+    #alternate sampling and marginal loss
+    if np.random.choice([True, False]):
+      encoder_assignment_sample = tf.math.softmax(encoder_assignment_logits, axis=-1)
+      
     level_loglikelihoods = []
     for level in range(self.dim_levels-1, -1, -1):
       if level < self.unfrozen_levels:
@@ -195,19 +199,17 @@ class FACTMx_head_ZINB_hierarchy(FACTMx_head):
     if self.marker_groups is not None:
       probs = tf.math.sigmoid(self.level_logits[-1])
       probs = tf.reshape(probs, (-1, self.dim_counts))
-      
-      markers = [tf.reduce_mean(tf.gather(probs, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
-      antagonists = [tf.reduce_mean(tf.gather(probs, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
-
-      marker_loss = tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists))
 
       counts = tf.math.exp(self.level_log_total_count[-1])
       counts = tf.reshape(counts, (-1, self.dim_counts))
 
-      markers = [tf.reduce_mean(tf.gather(counts, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
-      antagonists = [tf.reduce_mean(tf.gather(counts, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
+      stacked = tf.stack([probs, counts])
+      
+      markers = [tf.reduce_mean(tf.gather(stacked, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
+      antagonists = [tf.reduce_mean(tf.gather(stacked, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
 
-      marker_loss += tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists))
+      marker_loss = tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists))
+
 
     return tf.reduce_sum([kl_loss,
                           ll_loss,
