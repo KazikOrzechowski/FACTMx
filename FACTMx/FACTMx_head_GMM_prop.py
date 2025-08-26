@@ -109,7 +109,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
   def get_mixture_distributions(self):
     return tfp.distributions.MultivariateNormalDiagPlusLowRankCovariance(
         self.mixture_locs,
-        tf.keras.activations.relu(self.mixture_log_covs) + self.eps,
+        tf.keras.activations.relu(self.mixture_log_covs) + 1E-2,
         self.mixture_cov_perturb
     )
 
