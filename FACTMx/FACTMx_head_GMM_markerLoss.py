@@ -191,7 +191,8 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
               tfp.distributions.Categorical(logits=log_mixture_probs)
               )
     )
-      
+
+    probs = encoder_assignment_sample
     level_loglikelihoods = []
     for level in range(self.dim_levels-1, -1, -1):
       if level < self.unfrozen_levels:
