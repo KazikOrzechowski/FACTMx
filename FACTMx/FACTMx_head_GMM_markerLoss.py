@@ -2,14 +2,6 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import numpy as np
 
-try:
-  import tensorflow_model_optimization as tfmot
-  from tensorflow_model_optimization.python.core.keras.compat import keras
-  _TFMOT_IS_LOADED = True
-except ImportError:
-  import tensorflow.keras as keras
-  _TFMOT_IS_LOADED = False
-
 from FACTMx.FACTMx_head import FACTMx_head
 
 
@@ -192,7 +184,11 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
               )
     )
 
-    probs = encoder_assignment_sample
+    if np.random.choice([True, False]):
+      probs = encoder_assignment_sample
+    else:
+      probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
+      
     level_loglikelihoods = []
     for level in range(self.dim_levels-1, -1, -1):
       if level < self.unfrozen_levels:
