@@ -223,12 +223,12 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
       entropy = tf.math.softmax(encoder_assignment_logits, axis=-1)
       entropy = tf.reduce_sum(entropy, axis=0)
       entropy = entropy * tf.math.log(entropy)
-      entropy = -tf.reduce_sum(entropy)
+      entropy_loss = -tf.reduce_sum(entropy)
 
     return tf.reduce_sum([kl_loss,
                           ll_loss,
                           marker_loss * self.marker_loss_scale,
-                          -entropy,
+                          -entropy_loss,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
 
