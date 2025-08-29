@@ -27,6 +27,7 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
                dim_cov_perturb=2,
                temperature=1E-4,
                eps=1E-3,
+               use_entropy_loss=False,
                prop_loss_scale=1.,
                marker_loss_scale=1.):
     super().__init__(dim, dim_latent, head_name)
@@ -39,6 +40,7 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
     self.marker_groups = marker_groups
     self.temperature = temperature
     self.eps = eps
+    self.use_entropy_loss = use_entropy_loss
     self.prop_loss_scale = prop_loss_scale
     self.marker_loss_scale = marker_loss_scale
       
@@ -189,11 +191,6 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
               tfp.distributions.Categorical(logits=log_mixture_probs)
               )
     )
-
-    if np.random.choice([True, False]):
-      probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
-    else:
-      probs = encoder_assignment_sample
       
     level_loglikelihoods = []
     for level in range(self.dim_levels-1, -1, -1):
@@ -220,9 +217,17 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
 
       marker_loss = tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists) * tf.expand_dims(probs, axis=0))
 
+    entropy_loss = tf.constant(0.)
+    if self.use_entropy_loss:
+      entropy = tf.math.softmax(encoder_assignment_logits, axis=-1)
+      entropy = tf.reduce_sum(entropy, axis=0)
+      entropy = entropy * tf.math.log(entropy)
+      entropy = -tf.reduce_sum(entropy)
+
     return tf.reduce_sum([kl_loss,
                           ll_loss,
                           marker_loss * self.marker_loss_scale,
+                          -entropy,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
 
@@ -253,6 +258,7 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
         'head_name':self.head_name,
         'head_type':self.head_type,
         'temperature':self.temperature,
+        'use_entropy_loss':self.use_entropy_loss,
         'prop_loss_scale':self.prop_loss_scale,
         'marker_loss_scale':self.marker_loss_scale,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
