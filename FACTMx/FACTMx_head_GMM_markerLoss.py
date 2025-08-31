@@ -21,7 +21,8 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
                eps=1E-3,
                use_entropy_loss=False,
                prop_loss_scale=1.,
-               marker_loss_scale=1.):
+               marker_loss_scale=1.,
+               entropy_loss_scale=1.,):
     super().__init__(dim, dim_latent, head_name)
 
     self.dim_topics = dim_topics
@@ -35,6 +36,7 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
     self.use_entropy_loss = use_entropy_loss
     self.prop_loss_scale = prop_loss_scale
     self.marker_loss_scale = marker_loss_scale
+    self.entropy_loss_scale = entropy_loss_scale
       
 
     # >>> initialise layers >>>
@@ -224,7 +226,7 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
     return tf.reduce_sum([kl_loss,
                           ll_loss,
                           marker_loss * self.marker_loss_scale,
-                          -entropy_loss,
+                          -entropy_loss * self.entropy_loss_scale,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
 
@@ -258,6 +260,7 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
         'use_entropy_loss':self.use_entropy_loss,
         'prop_loss_scale':self.prop_loss_scale,
         'marker_loss_scale':self.marker_loss_scale,
+        'entropy_loss_scale':self.marker_loss_scale,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
         'mixture_params_list':[
           {
