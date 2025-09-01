@@ -210,7 +210,7 @@ class FACTMx_head_GMM_hierarchy_markerLoss(FACTMx_head):
     if self.marker_groups is not None:
       probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
       
-      counts_data = tf.expand_dims(counts, data, axis=-2)
+      counts_data = tf.expand_dims(counts_data, axis=-2)
       markers = [tf.reduce_sum(tf.gather(counts_data, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
       antagonists = [tf.reduce_sum(tf.gather(counts_data, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
 
