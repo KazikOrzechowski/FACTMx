@@ -102,7 +102,7 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
     self.t_vars = [*self.layers['mixture_logits'].trainable_variables,
                    *self.layers['encoder_classifier'].trainable_variables,
                    *self.level_logits,
-                   self.level_log_total_count,
+                   self.log_total_count,
                    self.inflated_loc_logits]
 
 
