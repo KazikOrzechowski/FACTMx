@@ -2,16 +2,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import numpy as np
 
-try:
-  import tensorflow_model_optimization as tfmot
-  from tensorflow_model_optimization.python.core.keras.compat import keras
-  _TFMOT_IS_LOADED = True
-except ImportError:
-  import tensorflow.keras as keras
-  _TFMOT_IS_LOADED = False
-
 from FACTMx.FACTMx_head import FACTMx_head
-
 
 class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
   head_type = 'ZINB_hierarchy2'
@@ -22,19 +13,25 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
                dim_levels=1,
                unfrozen_levels=None,
                layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
+               marker_groups=None,
                mixture_params_list=None,
+               log_total_count=None,
+               inflated_loc_logits=None,
                temperature=1E-4,
                eps=1E-3,
-               prop_loss_scale=1.):
+               prop_loss_scale=1., marker_loss_scale=.01, entropy_loss_scale=0.):
     super().__init__(dim, dim_latent, head_name)
 
     self.dim_topics = dim_topics
     self.dim_counts = dim_counts
     self.dim_levels = dim_levels
+    self.marker_groups = marker_groups
     self.unfrozen_levels = dim_levels if unfrozen_levels is None else unfrozen_levels
     self.temperature = temperature
     self.eps = eps
     self.prop_loss_scale = prop_loss_scale
+    self.entropy_loss_scale = entropy_loss_scale
+    self.marker_loss_scale = marker_loss_scale
 
     # >>> initialise layers >>>
     mixture_logits_config = layer_configs.pop('mixture_logits', 'linear')
@@ -71,13 +68,9 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
     assert self.dim_levels == len(mixture_params_list)
 
     self.level_logits = []
-    self.level_log_total_count = []
-    self.level_inflated_loc_logits = []
-
     for level, level_params in enumerate(mixture_params_list):
       _level_shape = (dim_topics,) * (level+1) + (dim_counts,)
       _logit_init = tf.keras.initializers.RandomNormal(stddev=dim_topics ** (-3*level))
-      _default_init = tf.keras.initializers.Zeros()
 
       if 'logits' in level_params.keys():
         logits = level_params['logits']
@@ -92,23 +85,25 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
                                                  trainable=True,
                                                  dtype=tf.float32))
 
-      log_total_count = level_params.pop('log_total_count', _default_init(shape=_level_shape))
-      self.level_log_total_count.append(tf.keras.Variable(log_total_count,
-                                                          trainable=True,
-                                                          dtype=tf.float32))
-
-      inflated_loc_logits = level_params.pop('inflated_loc_logits', _default_init(shape=_level_shape))
-      self.level_inflated_loc_logits.append(tf.keras.Variable(inflated_loc_logits,
-                                                              trainable=True,
-                                                              dtype=tf.float32))
+    if log_total_count is None:
+      log_total_count = 0.
+    self.log_total_count =  tf.keras.Variable(log_total_count,
+                                              trainable=True,
+                                              dtype=tf.float32)
+                 
+    if inflated_loc_logits is None:
+      inflated_loc_logits = tf.zeros(shape=(dim_counts,))
+    self.inflated_loc_logits = tf.keras.Variable(inflated_loc_logits,
+                                                  trainable=True,
+                                                  dtype=tf.float32)
     # <<< initialise mixtures <<<
 
     # get training variables
     self.t_vars = [*self.layers['mixture_logits'].trainable_variables,
                    *self.layers['encoder_classifier'].trainable_variables,
                    *self.level_logits,
-                   *self.level_log_total_count,
-                   *self.level_inflated_loc_logits]
+                   self.level_log_total_count,
+                   self.inflated_loc_logits]
 
 
   def get_assignment_distribution(self, logits):
@@ -125,19 +120,17 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
 
   def get_mixture_distributions(self, level):
     logits = self.level_logits[level]
-    log_total_count = self.level_log_total_count[level]
-    inflated_loc_logits = self.level_inflated_loc_logits[level]
     
     probs = tf.math.sigmoid(logits) + self.eps
-    total_count = tf.math.exp(log_total_count) + self.eps
-    inflated_loc_probs = tf.math.sigmoid(inflated_loc_logits) * 0.75
+    total_count = tf.math.exp(self.log_total_count) + self.eps
+    inflated_loc_probs = tf.math.sigmoid(self.inflated_loc_logits) * 0.75
     #reshape to flat mixtures
-    _flat_shape = (-1, self.dim_counts)
+    _flat_shape = (self.dim_topics ** (level+1), self.dim_counts)
 
     return tfp.distributions.ZeroInflatedNegativeBinomial(
         probs=tf.reshape(probs, _flat_shape),
-        total_count=tf.reshape(total_count, _flat_shape),
-        inflated_loc_probs=tf.reshape(inflated_loc_probs, _flat_shape),
+        total_count=tf.broadcast_to(total_count, _flat_shape),
+        inflated_loc_probs=tf.broadcast_to(inflated_loc_probs, _flat_shape),
         require_integer_total_count=False,
     )
 
@@ -173,6 +166,10 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
               )
     )
 
+    #alternate sampling and marginal loss
+    if np.random.choice([True, False]):
+      encoder_assignment_sample = tf.math.softmax(encoder_assignment_logits, axis=-1)
+      
     level_loglikelihoods = []
     for level in range(self.dim_levels-1, -1, -1):
       if level < self.unfrozen_levels:
@@ -188,8 +185,27 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
     kl_loss = kl_divergence * self.prop_loss_scale / _batch_size
     ll_loss = -tf.reduce_sum(level_loglikelihoods) / _batch_size
 
+    marker_loss = tf.constant(0.)
+    if self.marker_groups is not None:
+      probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
+      
+      counts_data = tf.expand_dims(data, axis=-2)
+      markers = [tf.reduce_sum(tf.gather(counts_data, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
+      antagonists = [tf.reduce_sum(tf.gather(counts_data, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
+
+      marker_loss = tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists) * tf.expand_dims(probs, axis=0))
+
+    entropy_loss = tf.constant(0.)
+    if self.entropy_loss_scale != 0.:
+      entropy = tf.math.softmax(encoder_assignment_logits, axis=-1)
+      entropy = tf.reduce_sum(entropy, axis=0)
+      entropy = entropy * tf.math.log(entropy)
+      entropy_loss = -tf.reduce_sum(entropy)
+
     return tf.reduce_sum([kl_loss,
                           ll_loss,
+                          marker_loss * self.marker_loss_scale,
+                          entropy_loss * self.entropy_loss_scale,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
 
@@ -214,21 +230,19 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
         'dim_counts':self.dim_counts,
         'dim_topics':self.dim_topics,
         'dim_levels':self.dim_levels,
+        'marker_groups':self.marker_groups,
         'unfrozen_levels':self.unfrozen_levels,
         'head_name':self.head_name,
         'head_type':self.head_type,
         'temperature':self.temperature,
+        'marker_groups':self.marker_groups,
         'prop_loss_scale':self.prop_loss_scale,
+        'marker_loss_scale':self.marker_loss_scale,
+        'entropy_loss_scale':self.entropy_loss_scale,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
-        'mixture_params_list':[
-          {
-          'logits':logits.numpy().tolist(),
-          'log_total_count':log_total_count.numpy().tolist(),
-          'inflated_loc_logits':inflated_loc_logits.numpy().tolist(),
-          } for logits, log_total_count, inflated_loc_logits in zip(self.level_logits, 
-                                                                    self.level_log_total_count, 
-                                                                    self.level_inflated_loc_logits)
-        ],
+        'log_total_count':self.log_total_count,
+        'inflated_loc_logits':self.inflated_loc_logits.numpy().tolist(),
+        'mixture_params_list':[{'logits':logits.numpy().tolist(),} for logits in self.level_logits],
     }
     return config
 
