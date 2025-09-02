@@ -240,7 +240,7 @@ class FACTMx_head_ZINB_hierarchy2(FACTMx_head):
         'marker_loss_scale':self.marker_loss_scale,
         'entropy_loss_scale':self.entropy_loss_scale,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
-        'log_total_count':self.log_total_count,
+        'log_total_count':self.log_total_count.numpy().tolist(),
         'inflated_loc_logits':self.inflated_loc_logits.numpy().tolist(),
         'mixture_params_list':[{'logits':logits.numpy().tolist(),} for logits in self.level_logits],
     }
