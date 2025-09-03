@@ -230,9 +230,11 @@ class FACTMx_head_MultiNormal(FACTMx_head):
   def __init__(self,
                dim, dim_latent, head_name,
                layer_configs={'loc':'linear', 'scale':'linear'},
+               independent=False,
                eps=1E-2, 
                **kwargs):
     super().__init__(dim, dim_latent, head_name)
+    self.independent = independent
     self.eps = eps
     self.layers = {}
 
@@ -262,9 +264,13 @@ class FACTMx_head_MultiNormal(FACTMx_head):
   def decode_params(self, latent):
     #decode loc and cov from a latent point
     loc = self.layers['loc'](latent)
-
     scale_diag = self.layers['scale'](latent) + self.eps
-    scale_diag = tf.linalg.diag(scale_diag)
+    
+    if self.independent:
+      loc = tf.expand_dims(loc, axis=-1)
+      scale_diag = tf.expand_dims(scale_diag, axis=-1)
+    else:
+      scale_diag = tf.linalg.diag(scale_diag)
 
     return loc, scale_diag
 
@@ -283,6 +289,8 @@ class FACTMx_head_MultiNormal(FACTMx_head):
 
   def loss(self, data, latent, beta=1):
     #return -loglikelihood of data given its latent point and any additional losses
+    if self.independent:
+      data = tf.expand_dims(data, axis=-1)
     log_prob = self.make_decoder(latent).log_prob(data)
     
     loss = -tf.reduce_mean(log_prob)
@@ -295,6 +303,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     config = super().get_config()
     config.update({
                 "head_type": self.head_type,
+                "independent": self.independent,
                 "eps": self.eps,
                 "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()}
              })
