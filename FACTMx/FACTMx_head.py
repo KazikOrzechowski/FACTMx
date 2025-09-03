@@ -265,19 +265,16 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     #decode loc and cov from a latent point
     loc = self.layers['loc'](latent)
     scale_diag = self.layers['scale'](latent) + self.eps
-    
-    if self.independent:
-      loc = tf.expand_dims(loc, axis=-1)
-      scale_diag = tf.expand_dims(scale_diag, axis=-1)
-    else:
-      scale_diag = tf.linalg.diag(scale_diag)
 
     return loc, scale_diag
 
   def make_decoder(self, latent):
     #return the decoding distribution given its latent point
-    loc, scale_tril = self.decode_params(latent)
-    return tfp.distributions.MultivariateNormalTriL(loc, scale_tril)
+    loc, scale = self.decode_params(latent)
+    if self.independent:
+      return tfp.distributions.MultivariateNormalDiag(loc, scale)
+    else:
+      return tfp.distributions.MultivariateNormalTriL(loc, scale)
 
   def encode(self, data):
     #no pass needed
@@ -289,8 +286,6 @@ class FACTMx_head_MultiNormal(FACTMx_head):
 
   def loss(self, data, latent, beta=1):
     #return -loglikelihood of data given its latent point and any additional losses
-    if self.independent:
-      data = tf.expand_dims(data, axis=-1)
     log_prob = self.make_decoder(latent).log_prob(data)
     
     loss = -tf.reduce_mean(log_prob)
