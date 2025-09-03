@@ -194,7 +194,8 @@ class FACTMx_head_Multinomial(FACTMx_head):
       encoder_input = self.layers['preencoder'](preencoder_input)
       return {'encoder_input': encoder_input}
     else:
-      return {'encoder_input': observations}
+      encoder_input = tf.reshape(observations, shape=(-1, self.dim_pos * self.dim_cat))
+      return {'encoder_input': encoder_input}
 
   def loss(self, data, latent, beta=1):
     #return -loglikelihood of data given its latent point
