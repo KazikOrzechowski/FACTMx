@@ -144,7 +144,7 @@ class FACTMx_head_Multinomial(FACTMx_head):
     self.eps = eps
     self.dim_pos = dim_pos
     self.dim_cat = dim_cat
-    _dim_logits = dim_pos * (dim_cat-1)
+    _dim_logits = dim_pos * dim_cat
 
     logits_config = layer_configs.pop('logits', 'linear')
     if logits_config == 'linear':
@@ -174,14 +174,11 @@ class FACTMx_head_Multinomial(FACTMx_head):
 
   def decode_params(self, latent):
     #decode logits from a latent point
-    return tf.reshape(self.layers['logits'](latent), shape=(-1, self.dim_pos, self.dim_cat-1))
+    return tf.reshape(self.layers['logits'](latent), shape=(-1, self.dim_pos, self.dim_cat))
 
   def make_decoder(self, latent, counts):
     #return the decoding distribution given its latent point
     logits = self.decode_params(latent)
-    padded_logits = tf.pad(logits,
-                        tf.constant([[0, 0], [0, 0], [1, 0]]),
-                        'CONSTANT')
     return tfp.distributions.Multinomial(total_count=counts, logits=padded_logits)
 
   def decode(self, latent, data):
@@ -197,9 +194,7 @@ class FACTMx_head_Multinomial(FACTMx_head):
       encoder_input = self.layers['preencoder'](preencoder_input)
       return {'encoder_input': encoder_input}
     else:
-      logits = tf.math.log(counts + self.eps)
-      normalized = logits[:,1:] - tf.reshape(logits[:,0], shape=(-1,1))
-      return {'encoder_input': normalized}
+      return {'encoder_input': observations}
 
   def loss(self, data, latent, beta=1):
     #return -loglikelihood of data given its latent point
