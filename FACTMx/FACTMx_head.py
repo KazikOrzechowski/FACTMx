@@ -179,7 +179,7 @@ class FACTMx_head_Multinomial(FACTMx_head):
   def make_decoder(self, latent, counts):
     #return the decoding distribution given its latent point
     logits = self.decode_params(latent)
-    return tfp.distributions.Multinomial(total_count=counts, logits=padded_logits)
+    return tfp.distributions.Multinomial(total_count=counts, logits=logits)
 
   def decode(self, latent, data):
     #decode a sample from latent
