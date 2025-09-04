@@ -141,7 +141,6 @@ class FACTMx_head_ZINB_mixture3(FACTMx_head):
            encoder_assignment_sample,
            encoder_assignment_logits,
            beta=1):
-    counts, library_sizes = data
     _batch_size = counts.shape[0]
              
     _, log_likelihoods, log_mixture_probs = self.decode(latent, data)
