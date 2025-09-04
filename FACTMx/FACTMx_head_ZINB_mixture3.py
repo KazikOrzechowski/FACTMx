@@ -126,8 +126,8 @@ class FACTMx_head_ZINB_mixture3(FACTMx_head):
 
     mixtures = self.get_mixture_distributions()
 
-    _broad_counts = tf.expand_dims(counts, -2) #(n_batch, n_subbatch, 1, n_counts)
-    log_likelihoods = mixtures.log_prob(data) 
+    _broad_data = tf.expand_dims(data, -2) #(n_batch, n_subbatch, 1, n_counts)
+    log_likelihoods = mixtures.log_prob(_broad_data) 
     log_likelihoods = tf.reduce_sum(log_likelihoods, axis=-1)
 
     assignment_sample = self.get_assignment_distribution(log_mixture_probs + log_likelihoods).sample() if sample else None
