@@ -234,7 +234,6 @@ class FACTMx_head_MultiNormal(FACTMx_head):
                eps=1E-2, 
                **kwargs):
     super().__init__(dim, dim_latent, head_name)
-    self.independent = independent
     self.eps = eps
     self.layers = {}
 
@@ -271,10 +270,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
   def make_decoder(self, latent):
     #return the decoding distribution given its latent point
     loc, scale = self.decode_params(latent)
-    if self.independent:
-      return tfp.distributions.MultivariateNormalDiag(loc, scale)
-    else:
-      return tfp.distributions.MultivariateNormalTriL(loc, scale)
+    return tfp.distributions.MultivariateNormalDiag(loc, scale)
 
   def encode(self, data):
     #no pass needed
@@ -298,7 +294,6 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     config = super().get_config()
     config.update({
                 "head_type": self.head_type,
-                "independent": self.independent,
                 "eps": self.eps,
                 "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()}
              })
