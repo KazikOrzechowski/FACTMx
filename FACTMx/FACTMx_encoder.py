@@ -100,9 +100,13 @@ class FACTMx_encoder_Linear(FACTMx_encoder):
     loc, scale_tril = self.encode_params(data)
     return tfp.distributions.MultivariateNormalTriL(loc, scale_tril)
 
-  def encode(self, data):
+  def encode(self, data, deterministic=False):
     #encode data to latent points
-    return self.make_encoder(data).sample()
+    if deterministic:
+      loc, scale = self.encode_params(data)
+      return loc
+    else:
+      return self.make_encoder(data).sample()
 
   def encode_with_loss(self, data):
     encoder = self.make_encoder(data)
