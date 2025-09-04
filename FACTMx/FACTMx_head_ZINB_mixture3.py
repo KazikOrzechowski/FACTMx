@@ -94,7 +94,7 @@ class FACTMx_head_ZINB_mixture3(FACTMx_head):
     return tfp.distributions.RelaxedOneHotCategorical(logits=logits, temperature=self.temperature)
 
 
-  def get_mixture_distributions(self, library_sizes):
+  def get_mixture_distributions(self):
     _mix_shape = (self.dim, self.dim_counts)
     
     inflated_loc_probs = tf.math.sigmoid(self.inflated_loc_logits) * .75
