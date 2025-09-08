@@ -171,7 +171,7 @@ class FACTMx_head_ZINB_mixture3(FACTMx_head):
     entropy_loss = tf.constant(0.)
     if self.entropy_loss_scale != 0:
       entropy = tf.math.softmax(encoder_assignment_logits, axis=-1)
-      entropy = tf.reduce_sum(entropy, axis=0)
+      entropy = tf.reduce_mean(entropy, axis=(0,1))
       entropy = entropy * tf.math.log(entropy)
       entropy_loss = -tf.reduce_sum(entropy)
 
