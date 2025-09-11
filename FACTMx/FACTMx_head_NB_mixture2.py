@@ -53,14 +53,14 @@ class FACTMx_head_NB_mixture2(FACTMx_head):
     encoder_classifier_config = layer_configs.pop('encoder_classifier', 'linear')
     if encoder_classifier_config == 'linear':
       self.layers['encoder_classifier'] = tf.keras.Sequential(
-                                            [tf.keras.Input(shape=(None, self.dim_counts)),
+                                            [tf.keras.Input(shape=(None, self.dim_counts+1)),
                                              tf.keras.layers.Dense(units=self.dim_mixtures,
                                                                    activation='log_softmax')]
                                           )
     else:
       self.layers['encoder_classifier'] = tf.keras.Sequential.from_config(encoder_classifier_config)
 
-    assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_counts)
+    assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_counts+1)
     assert self.layers['encoder_classifier'].output_shape == (None, None, self.dim_mixtures)
     # <<< initialise layers <<<
 
