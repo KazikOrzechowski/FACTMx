@@ -190,7 +190,9 @@ class FACTMx_head_NB_mixture2(FACTMx_head):
 
   def encode(self, data):
     counts, library_sizes = data
-    assignment_logits = self.layers['encoder_classifier'](counts)
+    
+    classifier_input = tf.concat([counts, library_sizes], axis=-1)
+    assignment_logits = self.layers['encoder_classifier'](classifier_input)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
