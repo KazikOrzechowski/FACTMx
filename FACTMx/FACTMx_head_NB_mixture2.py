@@ -24,7 +24,7 @@ class FACTMx_head_NB_mixture2(FACTMx_head):
                marker_groups=None,
                temperature=1E-4,
                eps=1E-3,
-               prop_loss_scale=1.):
+               prop_loss_scale=1., marker_loss_scale=0., entropy_loss_scale=0.):
     super().__init__(dim, dim_latent, head_name)
 
     self.dim_mixtures = dim + 1
@@ -32,6 +32,8 @@ class FACTMx_head_NB_mixture2(FACTMx_head):
     self.temperature = temperature
     self.eps = eps
     self.prop_loss_scale = prop_loss_scale
+    self.marker_loss_scale = marker_loss_scale
+    self.entropy_loss_scale = entropy_loss_scale
     self.marker_groups = marker_groups
 
     # >>> initialise layers >>>
@@ -163,16 +165,25 @@ class FACTMx_head_NB_mixture2(FACTMx_head):
 
     marker_loss = tf.constant(0.)
     if self.marker_groups is not None:
-      probs = tf.math.sigmoid(self.logits)
+      probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
       
-      markers = [tf.reduce_mean(tf.gather(probs, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
-      antagonists = [tf.reduce_mean(tf.gather(probs, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
+      counts = tf.expand_dims(counts, axis=-2)
+      markers = [tf.reduce_sum(tf.gather(counts, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
+      antagonists = [tf.reduce_sum(tf.gather(counts, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
 
-      marker_loss = tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists))
+      marker_loss = tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists) * tf.expand_dims(probs, axis=0))
+
+    entropy_loss = tf.constant(0.)
+    if self.entropy_loss_scale != 0:
+      entropy = tf.math.softmax(encoder_assignment_logits, axis=-1)
+      entropy = tf.reduce_mean(entropy, axis=(0,1))
+      entropy = entropy * tf.math.log(entropy)
+      entropy_loss = -tf.reduce_sum(entropy)
 
     return tf.reduce_sum([self.prop_loss_scale*kl_loss,
                           ll_loss,
-                          marker_loss,
+                          marker_loss * self.marker_loss_scale,
+                          entropy_loss * self.entropy_loss_scale,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
 
