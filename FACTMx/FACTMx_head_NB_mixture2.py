@@ -27,7 +27,7 @@ class FACTMx_head_NB_mixture2(FACTMx_head):
                prop_loss_scale=1., marker_loss_scale=0., entropy_loss_scale=0.):
     super().__init__(dim, dim_latent, head_name)
 
-    self.dim_mixtures = dim + 1
+    self.dim_mixtures = dim
     self.dim_counts = dim_counts
     self.temperature = temperature
     self.eps = eps
