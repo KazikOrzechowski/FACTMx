@@ -95,7 +95,7 @@ class FACTMx_head_NB_mixture2(FACTMx_head):
 
   def get_mixture_distributions(self, library_sizes):
     _broad_mix_shape = (1, 1, self.dim_mixtures, self.dim_counts)
-    _broad_data_shape = library_sizes.shape + (1, 1)
+    _broad_data_shape = library_sizes.shape + (1, )
     
     count_spread = tf.nn.softmax(self.log_count_spread, axis=1)
 
