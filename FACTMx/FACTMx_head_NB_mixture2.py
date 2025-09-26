@@ -114,11 +114,7 @@ class FACTMx_head_NB_mixture2(FACTMx_head):
 
 
   def decode_log_mixture_probs(self, latent):
-    paddings_probs = tf.constant([[0, 0], [1, 0]])
-    log_mixture_probs = tf.pad(self.layers['mixture_logits'](latent),
-                                paddings_probs,
-                                'CONSTANT')
-    log_mixture_probs = tf.math.log(tf.nn.softmax(log_mixture_probs, axis=-1))
+    log_mixture_probs = self.layers['mixture_logits'](latent)
 
     # minimum topic proportion is EPS
     log_eps = tf.constant(tf.math.log(self.eps), shape=log_mixture_probs.shape)
@@ -198,7 +194,7 @@ class FACTMx_head_NB_mixture2(FACTMx_head):
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
     log_proportions_sample = tf.math.log(proportions_sample)
 
-    encoder_input = log_proportions_sample[:,1:] - tf.reshape(log_proportions_sample[:,0], (-1, 1))
+    encoder_input = log_proportions_sample
 
     return {'encoder_input': encoder_input,
             'encoder_assignment_sample': assignment_sample,
