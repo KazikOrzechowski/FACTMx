@@ -118,7 +118,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
            beta=1):
     batch_size = data.shape[0]
              
-    _, assignment_logits, log_topic_proportions = FACTMx_head_TopicModel.decode(self, latent, data, sample=False)
+    _, assignment_logits, log_topic_proportions = FACTMx_head_TopicModel_markerLoss.decode(self, latent, data, sample=False)
 
     q_logits = tf.math.subtract(assignment_logits, log_topic_proportions)
 
