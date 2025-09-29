@@ -147,11 +147,11 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
       marker_loss = tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists) * tf.expand_dims(probs, axis=0))
 
     entropy_loss = tf.constant(0.)
-    if self.marker_loss_scale != 0.:
+    if self.entropy_loss_scale != 0.:
       entropy = tf.math.softmax(encoder_assignment_logits, axis=-1)
       entropy = tf.reduce_sum(entropy, axis=0)
       entropy = entropy * tf.math.log(entropy)
-      entropy_loss = -tf.reduce_sum(entropy)
+      entropy_loss = tf.reduce_sum(entropy) * self.entropy_loss_scale #entropy loss is -entropy, since we want a mixed assignment
     
     return tf.reduce_sum([kl_loss, 
                           ll_loss,
