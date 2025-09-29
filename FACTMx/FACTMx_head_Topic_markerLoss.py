@@ -26,6 +26,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
     self.eps = eps
     self.temperature = temperature
 
+    self.marker_groups = marker_groups
     self.prop_loss_scale = prop_loss_scale
     self.marker_loss_scale = marker_loss_scale
     self.entropy_loss_scale = entropy_loss_scale
