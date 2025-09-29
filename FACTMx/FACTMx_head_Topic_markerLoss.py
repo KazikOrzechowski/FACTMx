@@ -148,7 +148,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
 
     entropy_loss = tf.constant(0.)
     if self.entropy_loss_scale != 0.:
-      entropy = tf.math.softmax(encoder_assignment_logits, axis=-1)
+      entropy = tf.math.softmax(encoder_assignment_logits, axis=-1) + self.eps
       entropy = tf.reduce_sum(entropy, axis=0)
       entropy = entropy * tf.math.log(entropy)
       entropy_loss = tf.reduce_sum(entropy) * self.entropy_loss_scale #entropy loss is -entropy, since we want a mixed assignment
