@@ -65,7 +65,8 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
       topic_profiles = tf.keras.initializers.RandomNormal(stddev=0.02)(shape=(dim_words-1, dim))
     self.topic_profiles_trainable = tf.keras.Variable(topic_profiles, 
                                                       trainable=True,
-                                                      dtype=tf.float32)
+                                                      dtype=tf.float32,
+                                                      name=f'{head_name}_topics')
 
     self.t_vars = [*self.layers['mixture_logits'].trainable_variables,
                    *self.layers['encoder_classifier'].trainable_variables,
