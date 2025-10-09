@@ -98,7 +98,8 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
 
     log_topic_profiles = self.get_log_topic_profiles()
     log_topic_profiles = tf.transpose(log_topic_profiles)
-    log_topic_profiles = tf.expand_dims(log_topic_profiles, (0,1))
+    log_topic_profiles = tf.expand_dims(log_topic_profiles, 0)
+    log_topic_profiles = tf.expand_dims(log_topic_profiles, 0)
     
     data = tf.expand_dims(data, -2)
     counts = tf.reduce_sum(data, axis=-1)
