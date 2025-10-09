@@ -125,16 +125,19 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
     )
     kl_loss = self.prop_loss_scale * kl_divergence / batch_size
 
+    if np.random.choice([True, False]):
+      probs = encoder_assignment_sample
+    else:
+      probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
+      
     log_likelihood = tf.reduce_sum(
-        tf.math.multiply(encoder_assignment_sample, q_logits),
+        tf.math.multiply(probs, q_logits),
         #axis=2
     )
     ll_loss = -log_likelihood / batch_size
 
     marker_loss = tf.constant(0.)
     if self.marker_groups is not None:
-      probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
-      
       counts_data = tf.expand_dims(data, axis=-2)
       markers = [tf.reduce_mean(tf.gather(counts_data, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
       antagonists = [tf.reduce_mean(tf.gather(counts_data, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
