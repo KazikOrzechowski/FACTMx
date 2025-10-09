@@ -103,7 +103,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
     data = tf.expand_dims(data, -2)
     counts = tf.reduce_sum(data, axis=-1)
 
-    log_likelihoods = tfp.distributions.Multinomial(counts, logits=log_topic_profiles).log_prob(data)
+    log_likelihoods = tfp.distributions.Multinomial(counts, logits=log_topic_profiles, allow_nan_stats=False).log_prob(data)
 
     assignment_logits = tf.math.add(log_topic_proportions, log_likelihoods)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample() if sample else None
