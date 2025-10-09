@@ -80,7 +80,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
 
   
   def get_log_topic_profiles(self):
-    return tf.math.log_softmax(self.topic_profiles_trainable)
+    return tf.math.log_softmax(self.topic_profiles_trainable, axis=0)
 
   def get_topic_profiles(self):
     return tf.math.exp(self.get_log_topic_profiles())
