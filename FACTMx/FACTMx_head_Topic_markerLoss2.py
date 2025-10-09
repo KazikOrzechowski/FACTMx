@@ -126,7 +126,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
     kl_loss = self.prop_loss_scale * kl_divergence / batch_size
 
     #if np.random.choice([True, False]):
-    if False:
+    if True:
       probs = encoder_assignment_sample
     else:
       probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
