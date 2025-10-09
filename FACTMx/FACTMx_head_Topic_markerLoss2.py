@@ -51,7 +51,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
       self.layers['encoder_classifier'] = tf.keras.Sequential(
                                             [tf.keras.Input(shape=(None, self.dim_words)),
                                              tf.keras.layers.Dense(units=self.dim,
-                                                                   kernel_initializer='zeros',
+                                                                   kernel_initializer=tf.keras.initializers.RandomNormal(stddev=0.02),
                                                                    activation='log_softmax')]
                                           )
     else:
@@ -63,7 +63,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
 
     #log proportions in topic profiles, with respect to fixed proportion of word0
     if topic_profiles is None:
-      topic_profiles = tf.keras.initializers.RandomNormal(stddev=0.02)(shape=(dim_words, dim))
+      topic_profiles = tf.keras.initializers.Zeros()(shape=(dim_words, dim))
     self.topic_profiles_trainable = tf.keras.Variable(topic_profiles, 
                                                       trainable=True,
                                                       dtype=tf.float32,
