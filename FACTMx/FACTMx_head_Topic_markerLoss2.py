@@ -51,7 +51,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
       self.layers['encoder_classifier'] = tf.keras.Sequential(
                                             [tf.keras.Input(shape=(None, self.dim_words)),
                                              tf.keras.layers.Dense(units=self.dim,
-                                                                   kernel_initializer=tf.keras.initializers.RandomNormal(stddev=0.02),
+                                                                   kernel_initializer=tf.keras.initializers.RandomNormal(),
                                                                    activation='log_softmax')]
                                           )
     else:
