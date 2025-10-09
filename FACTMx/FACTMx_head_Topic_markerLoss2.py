@@ -138,6 +138,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
       antagonists = [tf.reduce_mean(tf.gather(counts_data, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
 
       marker_loss = tf.reduce_mean(tf.stack(markers) * tf.stack(antagonists) * tf.expand_dims(probs, axis=0))
+      marker_loss *= self.marker_loss_scale
 
     entropy_loss = tf.constant(0.)
     if self.entropy_loss_scale != 0.:
