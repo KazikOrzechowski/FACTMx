@@ -133,6 +133,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
 
     marker_loss = tf.constant(0.)
     if self.marker_groups is not None:
+      probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
       counts_data = tf.expand_dims(data, axis=-2)
       markers = [tf.reduce_mean(tf.gather(counts_data, marker_inds, axis=-1), axis=-1) for marker_inds, _ in self.marker_groups]
       antagonists = [tf.reduce_mean(tf.gather(counts_data, antagonist_inds, axis=-1), axis=-1) for _, antagonist_inds in self.marker_groups]
