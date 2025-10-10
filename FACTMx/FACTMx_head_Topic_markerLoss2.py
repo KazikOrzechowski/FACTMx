@@ -9,6 +9,7 @@ from FACTMx.FACTMx_head import FACTMx_head
 
 class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
   head_type='TopicModel_markerLoss'
+  p=[.5,.5]
 
   def __init__(self,
                dim, dim_latent, dim_words,
@@ -129,7 +130,7 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
     )
     kl_loss = self.prop_loss_scale * kl_divergence / batch_size
 
-    if np.random.choice([True, False]):
+    if np.random.choice([True, False], p=self.p):
       probs = encoder_assignment_sample
     else:
       probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
