@@ -64,7 +64,10 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
 
     #log proportions in topic profiles, with respect to fixed proportion of word0
     if topic_profiles is None:
-      topic_profiles = tf.keras.initializers.Zeros()(shape=(dim_words, dim))
+      if encoder_classifier_config == 'linear':
+        topic_profiles = self.layers['encoder_classifier'].layers[0].kernel
+      else:
+        topic_profiles = tf.keras.initializers.Zeros()(shape=(dim_words, dim))
     self.topic_profiles_trainable = tf.keras.Variable(topic_profiles, 
                                                       trainable=True,
                                                       dtype=tf.float32,
