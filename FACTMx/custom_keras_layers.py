@@ -12,7 +12,7 @@ class ConstantResponse(keras.layers.Layer):
                **kwargs):
     super().__init__()
     self.b = self.add_weight(shape=(units,),
-                             initializer=bias_initializer,
+                             initializer=keras.initializers.deserialize(bias_initializer),
                              trainable=trainable)
     self.activation = keras.activations.get(activation)
 
