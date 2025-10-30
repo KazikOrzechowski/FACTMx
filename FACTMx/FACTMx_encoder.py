@@ -72,7 +72,7 @@ class FACTMx_encoder_Linear(FACTMx_encoder):
                               [tf.keras.Input(shape=(sum(head_dims),)),
                                ConstantResponse(units=dim_latent,
                                                 activation='relu',
-                                                bias_initializer={'class_name':'Constant', 'value':0.1})]
+                                                bias_initializer={'class_name':'Constant', 'config':{'value':0.1}})]
       )
     else:
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
