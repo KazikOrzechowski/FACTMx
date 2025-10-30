@@ -68,11 +68,12 @@ class FACTMx_encoder_Linear(FACTMx_encoder):
 
     scale_config = layer_configs.pop('scale', 'linear')
     if scale_config == 'linear':
+      bias_config = tf.keras.initializers.Constant(0.1).get_config()
       self.layers['scale'] = tf.keras.Sequential(
                               [tf.keras.Input(shape=(sum(head_dims),)),
                                ConstantResponse(units=dim_latent,
                                                 activation='relu',
-                                                bias_initializer=tf.keras.initializers.Constant(0.1))]
+                                                bias_initializer=bias_config)]
       )
     else:
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
