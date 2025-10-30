@@ -249,12 +249,11 @@ class FACTMx_head_MultiNormal(FACTMx_head):
         
     scale_config = layer_configs.pop('scale', 'linear')
     if scale_config == 'linear':
-      bias_config = tf.keras.initializers.Constant(0.1).get_config()
       self.layers['scale'] = tf.keras.Sequential(
                               [tf.keras.Input(shape=(self.dim_latent,)),
                                ConstantResponse(units=self.dim,
                                                 activation='relu',
-                                                bias_initializer=bias_config)]
+                                                bias_initializer={'class_name':'Constant', 'value':0.1})]
                              )
     else:
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
