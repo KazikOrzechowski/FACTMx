@@ -231,7 +231,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
                dim, dim_latent, head_name,
                layer_configs={'loc':'linear', 'scale':'linear'},
                independent=False,
-               eps=1E-2, 
+               eps=1E-3, 
                **kwargs):
     super().__init__(dim, dim_latent, head_name)
     self.eps = eps
@@ -253,7 +253,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
                               [tf.keras.Input(shape=(self.dim_latent,)),
                                ConstantResponse(units=self.dim,
                                                 activation='relu',
-                                                bias_initializer={'class_name':'Constant', 'config':{'value':0.1}})]
+                                                bias_initializer={'class_name':'Constant', 'config':{'value':eps}})]
                              )
     else:
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
@@ -281,10 +281,12 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     return self.make_decoder(latent).sample()
 
   def loss(self, data, latent, beta=1):
-    #return -loglikelihood of data given its latent point and any additional losses
-    log_prob = self.make_decoder(latent).log_prob(data)
+    #return -loglikelihood of data given its latent point and any additional 
+    decoder = self.make_decoder(latent)
+    log_prob = decoder.log_prob(data)
     
     loss = -tf.reduce_mean(log_prob)
+    loss += tf.reduce_mean(decoder.variance()) * 100.
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
 
