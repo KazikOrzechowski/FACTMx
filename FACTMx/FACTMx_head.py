@@ -286,7 +286,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     log_prob = decoder.log_prob(data)
     
     loss = -tf.reduce_mean(log_prob)
-    loss += tf.reduce_mean(np.log(decoder.scale.diag)).
+    loss += tf.reduce_mean(np.log(decoder.scale.diag))
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
 
