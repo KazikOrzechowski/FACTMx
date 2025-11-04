@@ -253,8 +253,8 @@ class FACTMx_head_MultiNormal(FACTMx_head):
                               [tf.keras.Input(shape=(self.dim_latent,)),
                                ConstantResponse(units=self.dim,
                                                 activation='sigmoid',
-                                                bias_initializer={'class_name':'Constant', 'config':{'value':np.log(eps)}})],
-                               tf.keras.layers.Rescaling(scale=.5))
+                                                bias_initializer={'class_name':'Constant', 'config':{'value':np.log(eps)}}),
+                               tf.keras.layers.Rescaling(scale=.5)])
     else:
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
 
