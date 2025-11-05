@@ -286,7 +286,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     log_prob = tfp.distributions.MultivariateNormalDiag(loc, scale).log_prob(data)
     
     loss = -tf.reduce_mean(log_prob)
-    loss += tf.reduce_mean(np.log(scale)) * 1E3
+    loss += tf.reduce_mean(tf.math.log(scale)) * 1E3
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
 
