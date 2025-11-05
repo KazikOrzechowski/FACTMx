@@ -282,11 +282,11 @@ class FACTMx_head_MultiNormal(FACTMx_head):
 
   def loss(self, data, latent, beta=1):
     #return -loglikelihood of data given its latent point and any additional 
-    decoder = self.make_decoder(latent)
-    log_prob = decoder.log_prob(data)
+    loc, scale = self.decode_params(latent)
+    log_prob = tfp.distributions.MultivariateNormalDiag(loc, scale).log_prob(data)
     
     loss = -tf.reduce_mean(log_prob)
-    loss += tf.reduce_mean(np.log(decoder.scale.diag)) * 1E3
+    loss += tf.reduce_mean(np.log(scale)) * 1E3
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
 
