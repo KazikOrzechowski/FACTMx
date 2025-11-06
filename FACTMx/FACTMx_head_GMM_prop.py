@@ -86,7 +86,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     mixture_cov_perturb = mixture_params.pop('cov_perturb_factor', None)
     if mixture_cov_perturb is None:
       _cov_perturb_shape = (dim, dim_normal, self.n_cov_perturb_factor)
-      mixture_cov_perturb = tf.keras.initializers.Orthogonal()(shape=_cov_perturb_shape)
+      mixture_cov_perturb = tf.keras.initializers.RandomNormal()(shape=_cov_perturb_shape)
 
     self.mixture_cov_perturb = tf.keras.Variable(mixture_cov_perturb,
                                                  trainable=True,
