@@ -161,8 +161,8 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     )
     #log_likelihood = tf.reduce_sum(log_likelihood)
     cov_matrix = self.get_mixture_distributions().covariance()
-    mixture_params_penalty = self.l1_scale * (tf.reduce_mean(tf.math.log(cov_matrix + 1E-10)) - 
-                                              tf.reduce_mean(tf.math.log(1 - cov_matrix)))
+    mixture_params_penalty = self.l1_scale * (tf.reduce_mean(tf.math.log(cov_matrix + 1E-10)) + 
+                                              tf.reduce_mean(tf.math.exp(cov_matrix)))
     if self.regularise_orthogonal:
       normalized_topic = tf.math.l2_normalize(self.mixture_locs, axis=0)
       mixture_params_penalty += self.l1_scale * tf.reduce_sum(normalized_topic @ tf.transpose(normalized_topic))
