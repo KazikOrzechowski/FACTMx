@@ -43,8 +43,9 @@ class FACTMx_head_GMM_prop(FACTMx_head):
       self.layers['mixture_logits'] = tf.keras.Sequential(
                                         [tf.keras.Input(shape=(self.dim_latent,)),
                                          tf.keras.layers.Dense(units=self.dim,
-                                                               kernel_initializer='orthogonal',
-                                                               activation='log_softmax')]
+                                                               kernel_initializer='random_normal',
+                                                               activation='log_softmax',
+                                                               bias_initializer='ones')]
                                       )
     else:
       self.layers['mixture_logits'] = tf.keras.Sequential.from_config(mixture_logits_config)
