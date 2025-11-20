@@ -49,7 +49,8 @@ class FACTMx_head_TopicModel(FACTMx_head):
       self.layers['encoder_classifier'] = tf.keras.Sequential(
                                             [tf.keras.Input(shape=(None, self.dim_words)),
                                              tf.keras.layers.Dense(units=self.dim,
-                                                                   activation='log_softmax')]
+                                                                   activation='log_softmax',
+                                                                   bias_initializer='ones')]
                                           )
     else:
       self.layers['encoder_classifier'] = tf.keras.Sequential.from_config(encoder_classifier_config)
