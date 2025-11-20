@@ -37,7 +37,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
                                          tf.keras.layers.Dense(units=self.dim,
                                                                activation='log_softmax',
                                                                kernel_initializer='orthogonal',
-                                                               bias_initializer='ones)]
+                                                               bias_initializer='ones')]
                                       )
     else:
       self.layers['mixture_logits'] = tf.keras.Sequential.from_config(mixture_logits_config)
