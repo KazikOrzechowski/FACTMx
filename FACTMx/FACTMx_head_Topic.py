@@ -36,7 +36,8 @@ class FACTMx_head_TopicModel(FACTMx_head):
                                         [tf.keras.Input(shape=(self.dim_latent,)),
                                          tf.keras.layers.Dense(units=self.dim,
                                                                activation='log_softmax',
-                                                               kernel_initializer='orthogonal')]
+                                                               kernel_initializer='orthogonal',
+                                                               bias_initializer='ones)]
                                       )
     else:
       self.layers['mixture_logits'] = tf.keras.Sequential.from_config(mixture_logits_config)
@@ -61,7 +62,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
     #log proportions in topic profiles, with respect to fixed proportion of word0
     if topic_profiles is None:
-      topic_profiles = tf.keras.initializers.Orthogonal()(shape=(dim_words-1, dim))
+      topic_profiles = tf.keras.initializers.RandomNormal()(shape=(dim_words-1, dim))
     self.topic_profiles_trainable = tf.keras.Variable(topic_profiles, 
                                                       trainable=True,
                                                       dtype=tf.float32)
