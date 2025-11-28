@@ -18,7 +18,7 @@ def parallel_encode(head, head_data):
   return get_attr(head, 'encode')(head_data)
 
 def parallel_loss(head, latent, head_data, kwargs): 
-  return get_attr(head, 'loss')(head_data, latent, beta=self.beta, **kwargs)
+  return get_attr(head, 'loss')(head_data, latent, **kwargs)
       
 
 class FACTMx_model(tf.Module):
