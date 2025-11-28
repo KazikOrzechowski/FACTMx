@@ -13,6 +13,7 @@ import json
 import h5py
 import os
 
+
 class FACTMx_model(tf.Module):
   dim_latent: int
   head_dims: Tuple[int]
@@ -75,7 +76,7 @@ class FACTMx_model(tf.Module):
 
   def elbo(self, data):
     if self.multi:
-      parallel_encode = lambda head, head_data: get_attr(head, 'encode')(head_data)
+      def parallel_encode(head, head_data): return get_attr(head, 'encode')(head_data);
       with multiprocessing.Pool(processes=len(self.heads)) as pool:
         head_kwargs = pool.starmap(parallel_encode, zip(self.heads, data))
     else:
@@ -85,7 +86,7 @@ class FACTMx_model(tf.Module):
     latent, kl_loss = self.encoder.encode_with_loss(tf.concat(head_encoded, axis=-1))
 
     if self.multi:
-      parallel_loss = lambda head, head_data, kwargs: get_attr(head, 'loss')(head_data, latent, beta=self.beta, **kwargs)
+      def parallel_loss(head, head_data, kwargs): return get_attr(head, 'loss')(head_data, latent, beta=self.beta, **kwargs);
       with multiprocessing.Pool(processes=len(self.heads)) as pool:
         decoding_losses = pool.starmap(parallel_loss, zip(self.heads, data, head_kwargs))
     else:
