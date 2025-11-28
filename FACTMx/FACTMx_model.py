@@ -7,6 +7,7 @@ from typing import Tuple, Dict
 from FACTMx.FACTMx_head import FACTMx_head
 from FACTMx.FACTMx_encoder import FACTMx_encoder
 
+import multiprocessing
 from logging import warning
 import json
 import h5py
@@ -17,6 +18,7 @@ class FACTMx_model(tf.Module):
   head_dims: Tuple[int]
   heads: Tuple
   encoder: FACTMx_encoder
+  multi: False
 
   def __init__(self, dim_latent,
                heads_config,
@@ -72,16 +74,26 @@ class FACTMx_model(tf.Module):
     return self.decode(latent, data)
 
   def elbo(self, data):
-    head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
+    if self.multi:
+      with multiprocessing.Pool(processes=len(self.heads)) as pool:
+        parallel_encode = lambda head, head_data: get_attr(head, 'encode')(head_data)
+        head_kwargs = pool.starmap(parallel_encode, zip(self.heads, data))
+    else:
+      head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
     head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
 
     latent, kl_loss = self.encoder.encode_with_loss(tf.concat(head_encoded, axis=-1))
 
-    decoding_losses = [head.loss(data[i],
-                                 latent,
-                                 beta=self.beta,
-                                 **head_kwargs[i])
-                          for i, head in enumerate(self.heads)]
+    if self.multi:
+      with multiprocessing.Pool(processes=len(self.heads)) as pool:
+        parallel_loss = lambda head, head_data, kwargs: get_attr(head, 'loss')(head_data, latent, beta=self.beta, **kwargs)
+        decoding_losses = pool.starmap(parallel_loss, zip(self.heads, data, head_kwargs))
+    else:
+      decoding_losses = [head.loss(data[i],
+                                   latent,
+                                   beta=self.beta,
+                                   **head_kwargs[i])
+                            for i, head in enumerate(self.heads)]
     
     all_losses = tf.stack([kl_loss*self.beta, *decoding_losses])
     return -tf.reduce_mean(self.loss_scales * all_losses)
