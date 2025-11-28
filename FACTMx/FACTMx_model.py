@@ -14,6 +14,13 @@ import h5py
 import os
 
 
+def parallel_encode(head, head_data): 
+  return get_attr(head, 'encode')(head_data)
+
+def parallel_loss(head, latent, head_data, kwargs): 
+  return get_attr(head, 'loss')(head_data, latent, beta=self.beta, **kwargs)
+      
+
 class FACTMx_model(tf.Module):
   dim_latent: int
   head_dims: Tuple[int]
@@ -75,9 +82,9 @@ class FACTMx_model(tf.Module):
     return self.decode(latent, data)
 
   def elbo(self, data):
+    n_heads = len(self.heads)
     if self.multi:
-      def parallel_encode(head, head_data): return get_attr(head, 'encode')(head_data);
-      with multiprocessing.Pool(processes=len(self.heads)) as pool:
+      with multiprocessing.Pool(processes=n_heads) as pool:
         head_kwargs = pool.starmap(parallel_encode, zip(self.heads, data))
     else:
       head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
@@ -86,9 +93,8 @@ class FACTMx_model(tf.Module):
     latent, kl_loss = self.encoder.encode_with_loss(tf.concat(head_encoded, axis=-1))
 
     if self.multi:
-      def parallel_loss(head, head_data, kwargs): return get_attr(head, 'loss')(head_data, latent, beta=self.beta, **kwargs);
-      with multiprocessing.Pool(processes=len(self.heads)) as pool:
-        decoding_losses = pool.starmap(parallel_loss, zip(self.heads, data, head_kwargs))
+      with multiprocessing.Pool(processes=n_heads) as pool:
+        decoding_losses = pool.starmap(parallel_loss, zip(self.heads, [latent]*n_heads, data, head_kwargs))
     else:
       decoding_losses = [head.loss(data[i],
                                    latent,
