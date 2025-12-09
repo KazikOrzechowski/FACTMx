@@ -136,6 +136,44 @@ class FACTMx_head_GMM_prop(FACTMx_head):
 
     return assignment_sample, assignment_logits, mixture_logits
 
+# last working
+  # def loss(self,
+  #           data,
+  #           latent,
+  #           encoder_assignment_sample,
+  #           encoder_assignment_logits,
+  #           beta=1):
+  #   _, assignment_logits, mixture_logits = FACTMx_head_GMM_prop.decode(self, latent, data, sample=False)
+
+  #   log_likelihoods = tf.math.subtract(assignment_logits, mixture_logits)
+
+  #   kl_divergence = tf.reduce_sum(
+  #         tfp.distributions.OneHotCategorical(logits=encoder_assignment_logits).kl_divergence(
+  #             tfp.distributions.OneHotCategorical(logits=mixture_logits)
+  #             )
+  #   )
+    
+  #   #alternate sampling and marginal loss
+  #   # if np.random.choice([True, False]):
+  #   #   encoder_assignment_sample = tf.math.softmax(encoder_assignment_logits, axis=-1)
+  #   log_likelihood = tf.reduce_sum(
+  #       tf.math.multiply(encoder_assignment_sample, log_likelihoods),
+  #       #axis=2
+  #   )
+  #   #log_likelihood = tf.reduce_sum(log_likelihood)
+  #   cov_matrix = self.get_mixture_distributions().covariance()
+  #   mixture_params_penalty = self.l1_scale * (tf.reduce_mean(tf.math.log(cov_matrix ** 2 + 1E-10)) + 
+  #                                             tf.reduce_mean(tf.math.exp(cov_matrix)))
+  #   if self.regularise_orthogonal:
+  #     normalized_topic = tf.math.l2_normalize(self.mixture_locs, axis=0)
+  #     mixture_params_penalty += self.l1_scale * tf.reduce_sum(normalized_topic @ tf.transpose(normalized_topic))
+  #   batch_size = data.shape[0]
+
+  #   return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size,
+  #                         -log_likelihood/batch_size,
+  #                         mixture_params_penalty,
+  #                         *self.layers['mixture_logits'].losses,
+  #                         *self.layers['encoder_classifier'].losses])
 
   def loss(self,
             data,
@@ -147,8 +185,10 @@ class FACTMx_head_GMM_prop(FACTMx_head):
 
     log_likelihoods = tf.math.subtract(assignment_logits, mixture_logits)
 
-    kl_divergence = tf.reduce_sum(
-          tfp.distributions.OneHotCategorical(logits=encoder_assignment_logits).kl_divergence(
+    encoder_probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
+    encoder_probs = tf.reduce_mean(encoder_probs, axis=1) + 1E-50
+    kl_divergence = tf.reduce_mean(
+          tfp.distributions.OneHotCategorical(probs=encoder_probs).kl_divergence(
               tfp.distributions.OneHotCategorical(logits=mixture_logits)
               )
     )
@@ -167,10 +207,10 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     if self.regularise_orthogonal:
       normalized_topic = tf.math.l2_normalize(self.mixture_locs, axis=0)
       mixture_params_penalty += self.l1_scale * tf.reduce_sum(normalized_topic @ tf.transpose(normalized_topic))
-    batch_size = data.shape[0]
+    batch_size, subbatch_size, _ = data.shape
 
-    return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size,
-                          -log_likelihood/batch_size,
+    return tf.reduce_sum([self.prop_loss_scale*kl_divergence,
+                          -log_likelihood/batch_size/subbatch_size,
                           mixture_params_penalty,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
