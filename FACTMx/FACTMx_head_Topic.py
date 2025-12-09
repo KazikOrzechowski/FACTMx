@@ -122,6 +122,36 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
     return assignment_sample, assignment_logits, log_topic_proportions
 
+  # last working
+  # def loss(self, 
+  #          data, 
+  #          latent, 
+  #          encoder_assignment_sample, 
+  #          encoder_assignment_logits, 
+  #          beta=1):
+  #   _, assignment_logits, log_topic_proportions = FACTMx_head_TopicModel.decode(self, latent, data, sample=False)
+
+  #   q_logits = tf.math.subtract(assignment_logits, log_topic_proportions)
+
+  #   kl_divergence = tf.reduce_sum(
+  #       tfp.distributions.OneHotCategorical(logits=encoder_assignment_logits).kl_divergence(
+  #           tfp.distributions.OneHotCategorical(logits=log_topic_proportions)
+  #           )
+  #   )
+
+  #   log_likelihood = tf.reduce_sum(
+  #       tf.math.multiply(encoder_assignment_sample, q_logits),
+  #       #axis=2
+  #   )
+  #   #log_likelihood = tf.reduce_mean(log_likelihood)
+  #   batch_size = data.shape[0]
+    
+  #   return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size, 
+  #                         -log_likelihood/batch_size,
+  #                         self.get_topic_regularization_loss(),
+  #                         self.get_proportions_regularization_loss(log_topic_proportions),
+  #                         *self.layers['mixture_logits'].losses,
+  #                         *self.layers['encoder_classifier'].losses])
 
   def loss(self, 
            data, 
@@ -133,8 +163,10 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
     q_logits = tf.math.subtract(assignment_logits, log_topic_proportions)
 
-    kl_divergence = tf.reduce_sum(
-        tfp.distributions.OneHotCategorical(logits=encoder_assignment_logits).kl_divergence(
+    encoder_probs = tf.math.softmax(encoder_assignment_logits)
+    encoder_probs = tf.reduce_mean(encoder_probs, axis=1, keepdims=True)
+    kl_divergence = tf.reduce_mean(
+        tfp.distributions.OneHotCategorical(probs=encoder_probs).kl_divergence(
             tfp.distributions.OneHotCategorical(logits=log_topic_proportions)
             )
     )
@@ -144,10 +176,10 @@ class FACTMx_head_TopicModel(FACTMx_head):
         #axis=2
     )
     #log_likelihood = tf.reduce_mean(log_likelihood)
-    batch_size = data.shape[0]
+    batch_size, subbatch_size, _ = data.shape
     
-    return tf.reduce_sum([self.prop_loss_scale*kl_divergence/batch_size, 
-                          -log_likelihood/batch_size,
+    return tf.reduce_sum([self.prop_loss_scale*kl_divergence, 
+                          -log_likelihood / batch_size / subbatch_size,
                           self.get_topic_regularization_loss(),
                           self.get_proportions_regularization_loss(log_topic_proportions),
                           *self.layers['mixture_logits'].losses,
