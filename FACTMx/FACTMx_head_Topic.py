@@ -164,15 +164,15 @@ class FACTMx_head_TopicModel(FACTMx_head):
     q_logits = tf.math.subtract(assignment_logits, log_topic_proportions)
 
     encoder_probs = tf.math.softmax(encoder_assignment_logits)
-    encoder_probs = tf.reduce_mean(encoder_probs, axis=1, keepdims=True) + 1E-50
+    mean_probs = tf.reduce_mean(encoder_probs, axis=1, keepdims=True) + 1E-50
     kl_divergence = tf.reduce_mean(
-        tfp.distributions.OneHotCategorical(probs=encoder_probs).kl_divergence(
+        tfp.distributions.OneHotCategorical(probs=mean_probs).kl_divergence(
             tfp.distributions.OneHotCategorical(logits=log_topic_proportions)
             )
     )
 
     log_likelihood = tf.reduce_sum(
-        tf.math.multiply(encoder_assignment_sample, q_logits),
+        tf.math.multiply(encoder_probs, q_logits),
         #axis=2
     )
     #log_likelihood = tf.reduce_mean(log_likelihood)
