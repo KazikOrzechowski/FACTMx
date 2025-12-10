@@ -186,9 +186,9 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     log_likelihoods = tf.math.subtract(assignment_logits, mixture_logits)
 
     encoder_probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
-    encoder_probs = tf.reduce_mean(encoder_probs, axis=1, keepdims=True) + 1E-50
+    mean_probs = tf.reduce_mean(encoder_probs, axis=1, keepdims=True) + 1E-50
     kl_divergence = tf.reduce_mean(
-          tfp.distributions.OneHotCategorical(probs=encoder_probs).kl_divergence(
+          tfp.distributions.OneHotCategorical(probs=mean_probs).kl_divergence(
               tfp.distributions.OneHotCategorical(logits=mixture_logits)
               )
     )
@@ -197,7 +197,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     # if np.random.choice([True, False]):
     #   encoder_assignment_sample = tf.math.softmax(encoder_assignment_logits, axis=-1)
     log_likelihood = tf.reduce_sum(
-        tf.math.multiply(encoder_assignment_sample, log_likelihoods),
+        tf.math.multiply(encoder_probs, log_likelihoods),
         #axis=2
     )
     #log_likelihood = tf.reduce_sum(log_likelihood)
