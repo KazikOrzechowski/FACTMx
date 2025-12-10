@@ -128,12 +128,12 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
 
     encoder_probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
     encoder_mean = tf.reduce_mean(encoder_probs, axis=1) + 1E-50
-    kl_divergence = tf.reduce_sum(
+    kl_divergence = tf.reduce_mean(
         tfp.distributions.OneHotCategorical(probs=encoder_mean).kl_divergence(
             tfp.distributions.OneHotCategorical(logits=log_topic_proportions)
             )
     )
-    kl_loss = self.prop_loss_scale * kl_divergence / batch_size
+    kl_loss = self.prop_loss_scale * kl_divergence
 
     log_likelihood = tf.reduce_sum(
         tf.math.multiply(encoder_probs, q_logits),
