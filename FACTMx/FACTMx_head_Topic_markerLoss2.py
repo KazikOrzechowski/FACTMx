@@ -120,29 +120,26 @@ class FACTMx_head_TopicModel_markerLoss(FACTMx_head):
            encoder_assignment_sample, 
            encoder_assignment_logits, 
            beta=1):
-    batch_size = data.shape[0]
+    batch_size, subbatch_size, _ = data.shape
              
     _, assignment_logits, log_topic_proportions = FACTMx_head_TopicModel_markerLoss.decode(self, latent, data, sample=False)
 
     q_logits = tf.math.subtract(assignment_logits, log_topic_proportions)
 
+    encoder_probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
+    encoder_mean = tf.reduce_mean(encoder_probs, axis=1) + 1E-50
     kl_divergence = tf.reduce_sum(
-        tfp.distributions.OneHotCategorical(logits=encoder_assignment_logits).kl_divergence(
+        tfp.distributions.OneHotCategorical(probs=encoder_mean).kl_divergence(
             tfp.distributions.OneHotCategorical(logits=log_topic_proportions)
             )
     )
     kl_loss = self.prop_loss_scale * kl_divergence / batch_size
 
-    if np.random.choice([True, False], p=self.p):
-      probs = encoder_assignment_sample
-    else:
-      probs = tf.math.softmax(encoder_assignment_logits, axis=-1)
-      
     log_likelihood = tf.reduce_sum(
-        tf.math.multiply(probs, q_logits),
+        tf.math.multiply(encoder_probs, q_logits),
         #axis=2
     )
-    ll_loss = -log_likelihood / batch_size
+    ll_loss = -log_likelihood / batch_size / subbatch_size
 
     marker_loss = tf.constant(0.)
     if self.marker_groups is not None:
