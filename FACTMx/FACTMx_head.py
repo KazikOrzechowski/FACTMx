@@ -252,9 +252,8 @@ class FACTMx_head_MultiNormal(FACTMx_head):
       self.layers['scale'] = tf.keras.Sequential(
                               [tf.keras.Input(shape=(self.dim_latent,)),
                                ConstantResponse(units=self.dim,
-                                                activation='sigmoid',
-                                                bias_initializer={'class_name':'Constant', 'config':{'value':np.log(eps)}}),
-                               tf.keras.layers.Rescaling(scale=.5)])
+                                                activation='exp',
+                                                bias_initializer={'class_name':'Constant', 'config':{'value':np.log(eps)}})])
     else:
       self.layers['scale'] = tf.keras.Sequential.from_config(scale_config)
 
@@ -287,7 +286,7 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     log_prob = tfp.distributions.MultivariateNormalDiag(loc, scale).log_prob(data)
     
     loss = -tf.reduce_mean(log_prob)
-    loss += (_data_dim ** 2) * tf.reduce_sum(tf.math.log(scale)) / _batch_size
+    #loss += (_data_dim ** 2) * tf.reduce_sum(tf.math.log(scale)) / _batch_size
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
 
