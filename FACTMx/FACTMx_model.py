@@ -73,7 +73,7 @@ class FACTMx_model(tf.Module):
     #deterministic encoder
     head_first_pass = [head.first_pass(data[i]) for i, head in enumerate(self.heads)]
     head_first_encoded = [head_pass.pop('encoder_input') for head_pass in head_first_pass]
-    encoder_first_pass = self.first_encoder.encode_params(tf.concat(head_first_encoded, axis=1))
+    encoder_first_pass, _ = self.first_encoder.encode_params(tf.concat(head_first_encoded, axis=1))
     
     head_kwargs = [head.encode(data[i], encoder_first_pass) for i, head in enumerate(self.heads)]
     head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
