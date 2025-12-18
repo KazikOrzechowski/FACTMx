@@ -11,7 +11,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
   head_type='TopicModel'
 
   def __init__(self,
-               dim, dim_latent, dim_words,
+               dim, dim_latent, dim_words, dim_first_pass,
                head_name,
                layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
                topic_profiles=None,
@@ -24,6 +24,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
                  
     self.eps = eps
     self.dim_words = dim_words
+    self.dim_first_pass = dim_first_pass
     self.topic_L2_penalty = topic_L2_penalty
     self.proportions_L2_penalty = proportions_L2_penalty
     self.prop_loss_scale = prop_loss_scale
@@ -45,10 +46,11 @@ class FACTMx_head_TopicModel(FACTMx_head):
     assert self.layers['mixture_logits'].output_shape == (None, self.dim)
     assert self.layers['mixture_logits'].input_shape == (None, self.dim_latent)
 
+                 
     encoder_classifier_config = layer_configs.pop('encoder_classifier', 'linear')
     if encoder_classifier_config == 'linear':
       self.layers['encoder_classifier'] = tf.keras.Sequential(
-                                            [tf.keras.Input(shape=(None, self.dim_words)),
+                                            [tf.keras.Input(shape=(None, self.dim_words + self.dim_first_pass)),
                                              tf.keras.layers.Dense(units=self.dim,
                                                                    activation='log_softmax',
                                                                    bias_initializer='ones')]
@@ -56,8 +58,22 @@ class FACTMx_head_TopicModel(FACTMx_head):
     else:
       self.layers['encoder_classifier'] = tf.keras.Sequential.from_config(encoder_classifier_config)
 
-    assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_words)
+    assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_words + self.dim_first_pass)
     assert self.layers['encoder_classifier'].output_shape == (None, None, self.dim)
+
+    
+    first_classifier_config = layer_configs.pop('first_classifier', 'linear')
+    if first_classifier_config == 'linear':
+      self.layers['first_classifier'] = tf.keras.Sequential(
+                                            [tf.keras.Input(shape=(None, self.dim_normal)),
+                                             tf.keras.layers.Dense(units=self.dim,
+                                                                   activation='log_softmax')]
+                                          )
+    else:
+      self.layers['first_classifier'] = tf.keras.Sequential.from_config(first_classifier_config)
+
+    assert self.layers['first_classifier'].input_shape == (None, None, self.dim_words)
+    assert self.layers['first_classifier'].output_shape == (None, None, self.dim)
     # <<< initialise layers <<<
 
     #log proportions in topic profiles, with respect to fixed proportion of word0
@@ -69,6 +85,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
 
     self.t_vars = [*self.layers['mixture_logits'].trainable_variables,
                    *self.layers['encoder_classifier'].trainable_variables,
+                   *self.layers['first_classifier'].trainable_variables,
                    self.topic_profiles_trainable]
 
 
@@ -186,8 +203,13 @@ class FACTMx_head_TopicModel(FACTMx_head):
                           *self.layers['encoder_classifier'].losses])
 
 
-  def encode(self, data):
-    assignment_logits = self.layers['encoder_classifier'](data) 
+  def encode(self, data, first_pass):
+    _, subbatch_size, _ = data.shape
+    first_pass = tf.expand_dims(first_pass, 1)
+    first_pass = tf.repeat(first_pass, subbatch_size, axis=1)
+    input = tf.concat([data, first_pass], axis=-1)
+    
+    assignment_logits = self.layers['encoder_classifier'](input) 
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample() 
 
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
@@ -196,7 +218,17 @@ class FACTMx_head_TopicModel(FACTMx_head):
     return {'encoder_input': encoder_input,
             'encoder_assignment_sample': assignment_sample,
             'encoder_assignment_logits': assignment_logits}
+  
+  def first_pass(self, data):
+    assignment_logits = self.layers['first_classifier'](data) 
+    assignment_sample = self.get_assignment_distribution(assignment_logits).sample() 
 
+    proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
+    encoder_input = tf.math.log(proportions_sample)
+
+    return {'encoder_input': encoder_input,
+            'encoder_assignment_sample': assignment_sample,
+            'encoder_assignment_logits': assignment_logits}
 
   def get_config(self):
     config = {
