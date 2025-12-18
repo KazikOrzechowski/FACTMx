@@ -21,7 +21,7 @@ class FACTMx_model(tf.Module):
   heads: Tuple
   encoder: FACTMx_encoder
 
-  def __init__(self, dim_latent,
+  def __init__(self, dim_latent, dim_first_pass,
                heads_config,
                encoder_config=None,
                optimizer_config=None,
@@ -31,10 +31,12 @@ class FACTMx_model(tf.Module):
     super().__init__(name=name)
 
     self.dim_latent = dim_latent
+    self.dim_first_pass = dim_first_pass
     self.beta = beta
     for head_config in heads_config:
       head_config.pop('dim_latent', None)
-    self.heads = [FACTMx_head.factory(**head_kwargs, dim_latent=self.dim_latent) for head_kwargs in heads_config]
+      head_config.pop('dim_first_pass', None)
+    self.heads = [FACTMx_head.factory(**head_kwargs, dim_latent=self.dim_latent, dim_first_self.dim_first_pass) for head_kwargs in heads_config]
     self.head_dims = [head.dim for head in self.heads]
     self.loss_scales = tf.ones((1+len(self.heads),)) if loss_scales is None else tf.constant(loss_scales)
     self.layers = None #handled by pruning module
@@ -45,9 +47,13 @@ class FACTMx_model(tf.Module):
                         'head_dims': self.head_dims,
                         'prior_params': prior_params}
     self.encoder = FACTMx_encoder.factory(**encoder_config)
+    self.first_encoder = FACTMx_encoder.factory(encoder_type='Linear',
+                                                dim_latent=dim_latent, 
+                                                head_dims=self.head_dims,
+                                                prior_params=prior_params)
 
     #gather training variables TODO check why tf.Module fails to collect them automatically
-    self.t_vars = (*self.encoder.t_vars, *(var for head in self.heads for var in head.t_vars))
+    self.t_vars = (*self.encoder.t_vars, *self.first_encoder.t_vars, *(var for head in self.heads for var in head.t_vars))
 
     if optimizer_config is not None:
       self.optimizer = tf.keras.optimizers.get(optimizer_config)
@@ -55,13 +61,21 @@ class FACTMx_model(tf.Module):
       self.optimizer = None
 
   def encode(self, data):
-    head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
+    head_first_pass = [head.first_pass(data[i]) for i, head in enumerate(self.heads)]
+    head_first_encoded = [head_pass.pop('encoder_input') for head_pass in head_first_pass]
+    encoder_first_pass = self.first_encoder.encode(tf.concat(head_first_encoded, axis=1))
+    
+    head_kwargs = [head.encode(data[i], encoder_first_pass) for i, head in enumerate(self.heads)]
     head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
     return self.encoder.encode(tf.concat(head_encoded, axis=1)), head_kwargs
 
   def get_latent_representation(self, data):
     #deterministic encoder
-    head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
+    head_first_pass = [head.first_pass(data[i]) for i, head in enumerate(self.heads)]
+    head_first_encoded = [head_pass.pop('encoder_input') for head_pass in head_first_pass]
+    encoder_first_pass = self.first_encoder.encode_params(tf.concat(head_first_encoded, axis=1))
+    
+    head_kwargs = [head.encode(data[i], encoder_first_pass) for i, head in enumerate(self.heads)]
     head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
 
     loc, _ = self.encoder.encode_params(tf.concat(head_encoded, axis=1))
@@ -75,7 +89,11 @@ class FACTMx_model(tf.Module):
     return self.decode(latent, data)
 
   def elbo(self, data):
-    head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
+    head_first_pass = [head.first_pass(data[i]) for i, head in enumerate(self.heads)]
+    head_first_encoded = [head_pass.pop('encoder_input') for head_pass in head_first_pass]
+    encoder_first_pass = self.first_encoder.encode(tf.concat(head_first_encoded, axis=1))
+    
+    head_kwargs = [head.encode(data[i], encoder_first_pass) for i, head in enumerate(self.heads)]
     head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
 
     latent, kl_loss = self.encoder.encode_with_loss(tf.concat(head_encoded, axis=-1))
@@ -171,6 +189,7 @@ class FACTMx_model(tf.Module):
       json.dump(config, f)
 
     self.encoder.save_weights(f'{model_path}/encoder')
+    self.first_encoder.save_weights(f'{model_path}/first_encoder')
     for i, head in enumerate(self.heads):
       head.save_weights(f'{model_path}/head{i}')
 
@@ -188,6 +207,7 @@ class FACTMx_model(tf.Module):
     model = FACTMx_model.from_config(config)
 
     model.encoder.load_weights(f'{model_path}/encoder')
+    model.first_encoder.load_weights(f'{model_path}/first_encoder')
     for i, head in enumerate(model.heads):
       head.load_weights(f'{model_path}/head{i}')
 
