@@ -271,7 +271,11 @@ class FACTMx_head_MultiNormal(FACTMx_head):
     loc, scale = self.decode_params(latent)
     return tfp.distributions.MultivariateNormalDiag(loc, scale)
 
-  def encode(self, data):
+  def encode(self, data, first_pass):
+    #no pass needed
+    return {'encoder_input':data}
+
+  def first_pass(self, data):
     #no pass needed
     return {'encoder_input':data}
 
