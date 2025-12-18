@@ -65,7 +65,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
     first_classifier_config = layer_configs.pop('first_classifier', 'linear')
     if first_classifier_config == 'linear':
       self.layers['first_classifier'] = tf.keras.Sequential(
-                                            [tf.keras.Input(shape=(None, self.dim_normal)),
+                                            [tf.keras.Input(shape=(None, self.dim_words)),
                                              tf.keras.layers.Dense(units=self.dim,
                                                                    activation='log_softmax')]
                                           )
