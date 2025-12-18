@@ -17,7 +17,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
   head_type = 'GMM_prop'
 
   def __init__(self,
-               dim, dim_latent, dim_normal,
+               dim, dim_latent, dim_normal, dim_first_pass,
                head_name,
                layer_configs={'mixture_logits':'linear', 'encoder_classifier':'linear'},
                mixture_params={'loc': 'random', 'log_cov_diag': 0., 'cov_perturb_factor': None},
@@ -30,6 +30,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     super().__init__(dim, dim_latent, head_name)
 
     self.dim_normal = dim_normal
+    self.dim_first_pass = dim_first_pass
     self.temperature = temperature
     self.eps = eps
     self.n_cov_perturb_factor = min(dim_normal, max_n_perturb_factor)
@@ -56,15 +57,29 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     encoder_classifier_config = layer_configs.pop('encoder_classifier', 'linear')
     if encoder_classifier_config == 'linear':
       self.layers['encoder_classifier'] = tf.keras.Sequential(
-                                            [tf.keras.Input(shape=(None, self.dim_normal)),
+                                            [tf.keras.Input(shape=(None, self.dim_normal + self.dim_first_pass)),
                                              tf.keras.layers.Dense(units=self.dim,
                                                                    activation='log_softmax')]
                                           )
     else:
       self.layers['encoder_classifier'] = tf.keras.Sequential.from_config(encoder_classifier_config)
 
-    assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_normal)
+    assert self.layers['encoder_classifier'].input_shape == (None, None, self.dim_normal + self.dim_first_pass)
     assert self.layers['encoder_classifier'].output_shape == (None, None, self.dim)
+
+    
+    first_classifier_config = layer_configs.pop('first_classifier', 'linear')
+    if first_classifier_config == 'linear':
+      self.layers['first_classifier'] = tf.keras.Sequential(
+                                            [tf.keras.Input(shape=(None, self.dim_normal)),
+                                             tf.keras.layers.Dense(units=self.dim,
+                                                                   activation='log_softmax')]
+                                          )
+    else:
+      self.layers['first_classifier'] = tf.keras.Sequential.from_config(first_classifier_config)
+
+    assert self.layers['first_classifier'].input_shape == (None, None, self.dim_normal)
+    assert self.layers['first_classifier'].output_shape == (None, None, self.dim)
     # <<< initialise layers <<<
 
     # >>> initialise mixtures >>>
@@ -97,6 +112,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     # get training variables
     self.t_vars = [*self.layers['mixture_logits'].trainable_variables,
                    *self.layers['encoder_classifier'].trainable_variables,
+                   *self.layers['first_classifier'].trainable_variables,
                    self.mixture_locs,
                    self.mixture_log_covs,
                    self.mixture_cov_perturb]
@@ -214,10 +230,25 @@ class FACTMx_head_GMM_prop(FACTMx_head):
                           mixture_params_penalty,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
+              
+  def encode(self, data, first_pass):
+    _, subbatch_size, _ = data.shape
+    first_pass = tf.expand_dims(first_pass, 1)
+    first_pass = tf.repeat(first_pass, subbatch_size, axis=1)
+    input = tf.concat([data, first_pass], axis=-1)
+    
+    assignment_logits = self.layers['encoder_classifier'](input)
+    assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
+    proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
+    encoder_input = tf.math.log(proportions_sample)
 
-  def encode(self, data):
-    assignment_logits = self.layers['encoder_classifier'](data)
+    return {'encoder_input': encoder_input,
+            'encoder_assignment_sample': assignment_sample,
+            'encoder_assignment_logits': assignment_logits}
+
+  def first_pass(self, data):
+    assignment_logits = self.layers['first_classifier'](data)
     assignment_sample = self.get_assignment_distribution(assignment_logits).sample()
 
     proportions_sample = tf.reduce_mean(assignment_sample, axis=1) + self.eps
