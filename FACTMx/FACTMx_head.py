@@ -225,6 +225,7 @@ class FACTMx_head_Multinomial(FACTMx_head):
 
 
 class FACTMx_head_MultiNormal(FACTMx_head):
+  #
   head_type = 'MultiNormal'
 
   def __init__(self,
