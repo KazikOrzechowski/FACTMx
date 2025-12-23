@@ -172,7 +172,7 @@ class FACTMx_head_TopicModel(FACTMx_head):
     )
 
     log_likelihood = tf.reduce_sum(
-        tf.math.multiply(encoder_probs, q_logits),
+        tf.math.multiply(encoder_assignment_sample, q_logits),
         #axis=2
     )
     #log_likelihood = tf.reduce_mean(log_likelihood)
