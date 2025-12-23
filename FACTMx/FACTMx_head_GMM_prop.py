@@ -197,7 +197,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     # if np.random.choice([True, False]):
     #   encoder_assignment_sample = tf.math.softmax(encoder_assignment_logits, axis=-1)
     log_likelihood = tf.reduce_sum(
-        tf.math.multiply(encoder_probs, log_likelihoods),
+        tf.math.multiply(encoder_assignment_sample, log_likelihoods),
         #axis=2
     )
     #log_likelihood = tf.reduce_sum(log_likelihood)
