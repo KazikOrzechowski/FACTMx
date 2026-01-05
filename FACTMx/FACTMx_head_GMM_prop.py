@@ -207,10 +207,10 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     if self.regularise_orthogonal:
       normalized_topic = tf.math.l2_normalize(self.mixture_locs, axis=0)
       mixture_params_penalty += self.l1_scale * tf.reduce_sum(normalized_topic @ tf.transpose(normalized_topic))
-    batch_size, subbatch_size, _ = data.shape
+    batch_size, subbatch_size, _ = data.shape #removed subbatch_size for test
 
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence,
-                          -log_likelihood/batch_size/subbatch_size,
+                          -log_likelihood/batch_size,
                           mixture_params_penalty,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
