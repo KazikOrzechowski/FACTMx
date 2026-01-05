@@ -176,10 +176,10 @@ class FACTMx_head_TopicModel(FACTMx_head):
         #axis=2
     )
     #log_likelihood = tf.reduce_mean(log_likelihood)
-    batch_size, subbatch_size, _ = data.shape
+    batch_size, subbatch_size, _ = data.shape #removed subbatch_size for test
     
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence, 
-                          -log_likelihood / batch_size / subbatch_size,
+                          -log_likelihood / batch_size,
                           self.get_topic_regularization_loss(),
                           self.get_proportions_regularization_loss(log_topic_proportions),
                           *self.layers['mixture_logits'].losses,
