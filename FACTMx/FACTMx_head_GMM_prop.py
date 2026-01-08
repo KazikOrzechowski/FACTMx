@@ -23,6 +23,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
                mixture_params={'loc': 'random', 'log_cov_diag': 0., 'cov_perturb_factor': None},
                temperature=1E-4, 
                eps=1E-3, 
+               cov_eps=1E-1,
                max_n_perturb_factor=2,
                l1_scale=.1,
                prop_loss_scale=1.,
@@ -32,6 +33,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     self.dim_normal = dim_normal
     self.temperature = temperature
     self.eps = eps
+    self.cov_eps = cov_eps
     self.n_cov_perturb_factor = min(dim_normal, max_n_perturb_factor)
     self.l1_scale = l1_scale
     self.prop_loss_scale = prop_loss_scale
@@ -110,7 +112,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
   def get_mixture_distributions(self):
     return tfp.distributions.MultivariateNormalDiagPlusLowRankCovariance(
         self.mixture_locs,
-        tf.keras.activations.relu(self.mixture_log_covs) + 1E-2,
+        tf.keras.activations.relu(self.mixture_log_covs) + self.cov_eps,
         self.mixture_cov_perturb
     )
 
@@ -237,6 +239,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
         'head_type':self.head_type,
         'temperature':self.temperature,
         'eps':self.eps,
+        'cov_eps':self.cov_eps,
         'max_n_perturb_factor':self.n_cov_perturb_factor,
         "layer_configs": {key: layer.get_config() for key, layer in self.layers.items()},
         'mixture_params':{
