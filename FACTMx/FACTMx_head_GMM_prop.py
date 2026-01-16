@@ -15,6 +15,7 @@ from FACTMx.FACTMx_head import FACTMx_head
 
 class FACTMx_head_GMM_prop(FACTMx_head):
   head_type = 'GMM_prop'
+  log_mult = False
 
   def __init__(self,
                dim, dim_latent, dim_normal,
@@ -206,6 +207,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     cov_matrix = self.get_mixture_distributions().covariance()
     diag_cov = tf.linalg.diag_part(cov_matrix)
     diag_cov = tf.reduce_mean(diag_cov ** 2, axis=-1)
+    diag_cov /= tf.reduce_sum(diag_cov)
     mixture_params_penalty = self.l1_scale * tf.reduce_mean(diag_cov * tf.math.log(diag_cov)) #we want big entropy of components variances
               
     if self.regularise_orthogonal:
@@ -213,8 +215,12 @@ class FACTMx_head_GMM_prop(FACTMx_head):
       mixture_params_penalty += self.l1_scale * tf.reduce_sum(normalized_topic @ tf.transpose(normalized_topic))
     batch_size, subbatch_size, _ = data.shape #removed subbatch_size for test
 
+    ll_loss = -log_likelihood/batch_size
+    if self.log_mult:
+      ll_loss /= subbatch_size
+
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence,
-                          -log_likelihood/batch_size,
+                          ll_loss,
                           mixture_params_penalty,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
