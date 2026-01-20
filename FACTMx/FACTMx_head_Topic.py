@@ -9,6 +9,7 @@ from FACTMx.FACTMx_head import FACTMx_head
 
 class FACTMx_head_TopicModel(FACTMx_head):
   head_type='TopicModel'
+  log_mult=False
 
   def __init__(self,
                dim, dim_latent, dim_words,
@@ -177,9 +178,13 @@ class FACTMx_head_TopicModel(FACTMx_head):
     )
     #log_likelihood = tf.reduce_mean(log_likelihood)
     batch_size, subbatch_size, _ = data.shape #removed subbatch_size for test
+
+    ll_loss = -log_likelihood / batch_size
+    if self.log_mult:
+      ll_loss /= subbatch_size
     
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence, 
-                          -log_likelihood / batch_size,
+                          ll_loss,
                           self.get_topic_regularization_loss(),
                           self.get_proportions_regularization_loss(log_topic_proportions),
                           *self.layers['mixture_logits'].losses,
