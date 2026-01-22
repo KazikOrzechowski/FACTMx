@@ -13,9 +13,36 @@ except ImportError:
 from FACTMx.FACTMx_head import FACTMx_head
 
 
+def ch_score(X, labels):
+  n_topics = labels.shape[-1]
+  dim_gmm = X.shape[-1]
+
+  X = tf.reshape(X, (-1, dim_gmm))
+  labels = tf.reshape(labels, (-1, n_topics))
+
+  n_samples = X.shape[0]
+
+  total_mean = tf.reduce_mean(X, axis=0)
+  
+  clusters = tf.expand_dims(X, -2) * tf.expand_dims(labels, -1)
+  cluster_pops = tf.reduce_sum(labels, axis=0)
+  cluster_means = tf.reduce_sum(clusters, axis=0) / tf.expand_dims(cluster_pops, -1)
+
+  extra_disp = cluster_pops * tf.reduce_sum((cluster_means - tf.expand_dims(total_mean, 0))**2, axis=-1)
+  extra_disp = tf.reduce_sum(extra_disp)
+
+  intra_disp = tf.reduce_sum((clusters - tf.expand_dims(cluster_means, 0))**2)
+
+  if intra_disp == 0.0:
+    return 1.0
+  else:
+    return extra_disp * (n_samples - n_topics) / (intra_disp * (n_topics - 1.0))
+
+
 class FACTMx_head_GMM_prop(FACTMx_head):
   head_type = 'GMM_prop'
   log_mult = False
+  ch_scale = 0.0
 
   def __init__(self,
                dim, dim_latent, dim_normal,
@@ -184,7 +211,8 @@ class FACTMx_head_GMM_prop(FACTMx_head):
             encoder_assignment_sample,
             encoder_assignment_logits,
             beta=1):
-    _, assignment_logits, mixture_logits = FACTMx_head_GMM_prop.decode(self, latent, data, sample=False)
+    
+    assignment_sample, assignment_logits, mixture_logits = FACTMx_head_GMM_prop.decode(self, latent, data, sample=self.ch_scale > 0)
 
     log_likelihoods = tf.math.subtract(assignment_logits, mixture_logits)
 
@@ -218,9 +246,13 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     ll_loss = -log_likelihood/batch_size
     if self.log_mult:
       ll_loss /= subbatch_size
+    
+    ch_loss = -self.ch_loss * ch_score(data, assignment_sample) if self.ch_loss > 0 else 0.
+  
 
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence,
                           ll_loss,
+                          ch_loss,
                           mixture_params_penalty,
                           *self.layers['mixture_logits'].losses,
                           *self.layers['encoder_classifier'].losses])
