@@ -247,7 +247,7 @@ class FACTMx_head_GMM_prop(FACTMx_head):
     if self.log_mult:
       ll_loss /= subbatch_size
     
-    ch_loss = -self.ch_loss * ch_score(data, assignment_sample) if self.ch_loss > 0 else 0.
+    ch_loss = -self.ch_loss * ch_score(data, assignment_sample) if self.ch_scale > 0 else 0.
   
 
     return tf.reduce_sum([self.prop_loss_scale*kl_divergence,
