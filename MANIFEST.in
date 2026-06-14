@@ -1,0 +1,2 @@
+include FACTMx/py.typed
+recursive-include docs *.rst *.py
