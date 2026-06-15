@@ -105,7 +105,7 @@ class Categorical(FACTMx_encoder):
     data = tf.cast(data, tf.float32)
     mean = self.layers['mean'](data) + self.eps
     mean = mean / tf.reduce_sum(mean, axis=-1, keepdims=True)
-    confidence = self.layers['confidence'](data) + self.eps
+    confidence = tf.clip_by_value(self.layers['confidence'](data), 1.0, 100.0)
     return mean, confidence
 
   def make_encoder(self, data: TensorLike) -> Distribution:
