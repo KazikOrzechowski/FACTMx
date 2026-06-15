@@ -94,7 +94,7 @@ class Categorical(FACTMx_encoder):
     if prior_params is None:
       # A vector prior is the natural unbatched prior for a Dirichlet posterior
       # with event shape ``dim_latent``. 
-      concentration = tf.ones((dim_latent,), dtype=tf.float32)
+      concentration = tf.ones((dim_latent,), dtype=tf.float32) / 10.
       self.prior = tfp.distributions.Dirichlet(concentration)
     else:
       self.prior = tfp.distributions.Dirichlet(**prior_params)
@@ -106,11 +106,6 @@ class Categorical(FACTMx_encoder):
     mean = mean / tf.reduce_sum(mean, axis=-1, keepdims=True)
     confidence = tf.clip_by_value(self.layers['confidence'](data), 1.0, 100.0)
 
-    
-    tf.debugging.check_numerics(data, "Categorical encoder input")
-    tf.debugging.check_numerics(mean, "Categorical mean")
-    tf.debugging.check_numerics(confidence, "Categorical confidence")
-    tf.debugging.check_numerics(mean * confidence, "Categorical concentration")
     return mean, confidence
 
   def make_encoder(self, data: TensorLike) -> Distribution:
