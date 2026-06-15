@@ -94,9 +94,7 @@ class Categorical(FACTMx_encoder):
 
     if prior_params is None:
       # A vector prior is the natural unbatched prior for a Dirichlet posterior
-      # with event shape ``dim_latent``.  Earlier experimental versions used an
-      # identity matrix here, which creates a batched prior and can make KL
-      # shapes hard to reason about.
+      # with event shape ``dim_latent``. 
       concentration = tf.ones((dim_latent,), dtype=tf.float32)
       self.prior = tfp.distributions.Dirichlet(concentration)
     else:
