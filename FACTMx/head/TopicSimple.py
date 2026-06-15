@@ -122,7 +122,8 @@ class TopicSimple(FACTMx_head):
 
   def get_profiles(self) -> tf.Tensor:
     profiles = tf.math.softmax(self.log_profiles, axis=-1)
-    return tf.clip_by_value(profiles, self.eps, 1.0)
+    profiles = tf.clip_by_value(profiles, self.eps, 1.0)
+    return profiles / tf.reduce_sum(profiles, axis=-1, keepdims=True)
   
   def make_decoder(self, latent: TensorLike, counts: TensorLike, deterministic: bool = False) -> Distribution:
     """Return a per-position multinomial decoder for the topic mixture."""
