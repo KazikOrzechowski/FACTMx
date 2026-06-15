@@ -125,7 +125,7 @@ class Categorical(FACTMx_encoder):
     encoder = self.make_encoder(data)
     sample = encoder.sample()
     # sample, _ = self.encode_params(data)
-    loss = tf.reduce_mean(encoder.kl_divergence(self.prior)) #* 0
+    loss = tf.reduce_mean(encoder.kl_divergence(self.prior)) * 0
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
     return sample, loss
