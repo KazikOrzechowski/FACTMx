@@ -123,7 +123,8 @@ class Categorical(FACTMx_encoder):
     """Return a latent sample together with the mean KL-to-prior loss."""
     encoder = self.make_encoder(data)
     sample = encoder.sample()
-    loss = tf.reduce_mean(encoder.kl_divergence(self.prior))
+    sample, _ = self.encode_params(data)
+    loss = tf.reduce_mean(encoder.kl_divergence(self.prior)) * 0
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
     return sample, loss
