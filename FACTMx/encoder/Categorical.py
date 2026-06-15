@@ -105,7 +105,7 @@ class Categorical(FACTMx_encoder):
     data = tf.cast(data, tf.float32)
     mean = tf.clip_by_value(self.layers['mean'](data), self.eps, 1.0)
     mean = mean / tf.reduce_sum(mean, axis=-1, keepdims=True)
-    confidence = tf.clip_by_value(self.layers['confidence'](data), 1.0, self.max_confidence)
+    confidence = tf.clip_by_value(self.layers['confidence'](data), 1.0, 1.0)
 
     return mean, confidence
 
@@ -125,7 +125,7 @@ class Categorical(FACTMx_encoder):
     """Return a latent sample together with the mean KL-to-prior loss."""
     encoder = self.make_encoder(data)
     sample = encoder.sample()
-    # sample, _ = self.encode_params(data)
+    sample, _ = self.encode_params(data)
     loss = tf.reduce_mean(encoder.kl_divergence(self.prior))
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
