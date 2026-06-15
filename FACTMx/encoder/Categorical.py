@@ -105,6 +105,12 @@ class Categorical(FACTMx_encoder):
     mean = tf.clip_by_value(self.layers['mean'](data), self.eps, 1.0)
     mean = mean / tf.reduce_sum(mean, axis=-1, keepdims=True)
     confidence = tf.clip_by_value(self.layers['confidence'](data), 1.0, 100.0)
+
+    
+    tf.debugging.check_numerics(data, "Categorical encoder input")
+    tf.debugging.check_numerics(mean, "Categorical mean")
+    tf.debugging.check_numerics(confidence, "Categorical confidence")
+    tf.debugging.check_numerics(mean * confidence, "Categorical concentration")
     return mean, confidence
 
   def make_encoder(self, data: TensorLike) -> Distribution:
@@ -123,8 +129,8 @@ class Categorical(FACTMx_encoder):
     """Return a latent sample together with the mean KL-to-prior loss."""
     encoder = self.make_encoder(data)
     sample = encoder.sample()
-    sample, _ = self.encode_params(data)
-    loss = tf.reduce_mean(encoder.kl_divergence(self.prior)) * 0
+    # sample, _ = self.encode_params(data)
+    loss = tf.reduce_mean(encoder.kl_divergence(self.prior)) #* 0
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
     return sample, loss
