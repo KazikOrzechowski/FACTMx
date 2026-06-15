@@ -84,7 +84,6 @@ class Categorical(FACTMx_encoder):
            ConstantResponse(
                units=1,
                activation='exp',
-               bias_initializer='ones',
            )]
       )
     else:
@@ -103,7 +102,7 @@ class Categorical(FACTMx_encoder):
   def encode_params(self, data: TensorLike) -> tuple[tf.Tensor, tf.Tensor]:
     """Return posterior mean and confidence for concatenated head encodings."""
     data = tf.cast(data, tf.float32)
-    mean = self.layers['mean'](data) + self.eps
+    mean = tf.clip_by_value(self.layers['mean'](data), self.eps, 1.0)
     mean = mean / tf.reduce_sum(mean, axis=-1, keepdims=True)
     confidence = tf.clip_by_value(self.layers['confidence'](data), 1.0, 100.0)
     return mean, confidence
