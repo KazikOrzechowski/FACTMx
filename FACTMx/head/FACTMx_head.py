@@ -68,7 +68,7 @@ class FACTMx_head(tf.Module):
     return {
         'dim': self.dim,
         'dim_latent': self.dim_latent,
-        'dim_preencoded': self.dim_preencoded,
+        # 'dim_preencoded': self.dim_preencoded,
         'head_name': self.head_name,
     }
 
