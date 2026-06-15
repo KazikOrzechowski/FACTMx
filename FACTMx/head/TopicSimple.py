@@ -28,7 +28,7 @@ class TopicSimple(FACTMx_head):
     dim_latent: Number of latent topics/classes.  In the simple FACTMx setup it
       is shared with the number of clonal-tree clone classes.
     head_name: Name used for variables and serialization.
-    profiles: Optional initial topic profiles with shape
+    log_profiles: Optional initial topic profiles (pre-softmax) with shape
       ``(dim_latent, dim_pos, dim_cat)``.
     layer_configs: Optional config containing a ``preencoder`` layer.
     eps: Numerical floor used before taking logs.
@@ -51,7 +51,7 @@ class TopicSimple(FACTMx_head):
       dim: int,
       dim_latent: int,
       head_name: str,
-      profiles: Optional[TensorLike] = None,
+      log_profiles: Optional[TensorLike] = None,
       layer_configs: LayerConfigMap = None,
       eps: float = 1E-3,
       temperature: float = 1E-2,
@@ -69,20 +69,19 @@ class TopicSimple(FACTMx_head):
     self.encode_logits = bool(encode_logits)
     layer_configs = dict(layer_configs or {})
 
-    if profiles is None:
-      profiles = tf.keras.initializers.RandomUniform(minval=eps, maxval=1.0)(
+    if log_profiles is None:
+      log_profiles = tf.keras.initializers.RandomUniform(minval=-1., maxval=1.0)(
           shape=(self.dim_latent, self.dim_pos, self.dim_cat)
       )
-    profiles = tf.cast(profiles, tf.float32)
-    profiles = profiles / tf.reduce_sum(profiles, axis=-1, keepdims=True)
-    self.profiles = tf.Variable(
-        profiles,
+    log_profiles = tf.cast(log_profiles, tf.float32)
+    self.log_profiles = tf.Variable(
+        log_profiles,
         trainable=True,
         dtype=tf.float32,
         name=f'{head_name}_profiles',
     )
 
-    self.t_vars = tuple([self.profiles])
+    self.t_vars = tuple([self.log_profiles])
 
     preencoder_config = layer_configs.pop('preencoder', None)
     if preencoder_config is None:
@@ -121,6 +120,10 @@ class TopicSimple(FACTMx_head):
     """Return hard one-hot topic assignments."""
     return tf.one_hot(tf.argmax(logits, axis=-1), depth=tf.shape(logits)[-1], dtype=tf.float32)
 
+  def get_profiles(self) -> tf.Tensor:
+    profiles = tf.math.softmax(self.log_profiles, axis=-1)
+    return tf.clip_by_value(profiles, self.eps, 1.0)
+  
   def make_decoder(self, latent: TensorLike, counts: TensorLike, deterministic: bool = False) -> Distribution:
     """Return a per-position multinomial decoder for the topic mixture."""
     latent = tf.cast(latent, tf.float32)
@@ -130,7 +133,7 @@ class TopicSimple(FACTMx_head):
       assignment = self.get_assignment_distribution(tf.math.log(tf.clip_by_value(latent, self.eps, 1.0))).sample()
     assignment = assignment[:, :, None, None]
 
-    profiles = tf.expand_dims(self.profiles, axis=0)
+    profiles = tf.expand_dims(self.get_profiles(), axis=0)
     probs = tf.reduce_sum(profiles * assignment, axis=1)
     return tfp.distributions.Multinomial(total_count=counts, probs=probs)
 
@@ -161,7 +164,7 @@ class TopicSimple(FACTMx_head):
     observations, counts = data
     counts = tf.expand_dims(tf.cast(counts, tf.float32), axis=1)
     observations = tf.expand_dims(tf.cast(observations, tf.float32), axis=1)
-    profiles = tf.expand_dims(self.profiles, axis=0)
+    profiles = tf.expand_dims(self.get_profiles(), axis=0)
     batch_size = tf.cast(tf.shape(observations)[0], tf.float32)
 
     dist = tfp.distributions.Multinomial(total_count=counts, probs=profiles)
@@ -188,7 +191,7 @@ class TopicSimple(FACTMx_head):
         'dim': self.dim,
         'dim_latent': self.dim_latent,
         'head_name': self.head_name,
-        'profiles': self.profiles.numpy().tolist(),
+        'log_profiles': self.log_profiles.numpy().tolist(),
         'layer_configs': {key: layer.get_config() for key, layer in self.layers.items()},
         'eps': self.eps,
         'temperature': self.temperature,
