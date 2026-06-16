@@ -14,6 +14,7 @@ from FACTMx.head.GMM import GMM
 from FACTMx.head.ClonalTree import ClonalTree
 from FACTMx.head.ClonalTreeSimple import ClonalTreeSimple
 from FACTMx.head.TopicSimple import TopicSimple, TopicModelSimple
+from FACTMx.head.TopicSimpleModeInflated import TopicSimpleModeInflated, TopicModelSimpleModeInflated
 
 __all__ = [
     'FACTMx_head',
@@ -27,4 +28,6 @@ __all__ = [
     'ClonalTreeSimple',
     'TopicSimple',
     'TopicModelSimple',
+    'TopicSimpleModeInflated',
+    'TopicModelSimpleModeInflated',
 ]
