@@ -126,11 +126,11 @@ class TopicSimpleModeInflated(TopicSimple):
     is_mode_sequence = tf.reduce_all(is_mode_position, axis=-1)
 
     mode_probs = tf.clip_by_value(self.get_mode_inflation_probs(), self.eps, 1.0 - self.eps)
-    log_mode = tf.math.log(tf.expand_dims(mode_probs, axis=0))
     log_nonmode = (
         tf.math.log1p(-tf.expand_dims(mode_probs, axis=0))
         + topic_sequence_log_prob
     )
+    log_mode = tf.broadcast_to(tf.math.log(mode_probs), log_nonmode.shape)
 
     return tf.where(
         is_mode_sequence,
