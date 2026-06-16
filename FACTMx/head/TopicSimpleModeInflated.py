@@ -84,18 +84,6 @@ class TopicSimpleModeInflated(TopicSimple):
     """Return cluster-specific probabilities of observing the mode sequence."""
     return tf.math.sigmoid(self.mode_inflation_logits)
 
-  def _profile_probs(self) -> tf.Tensor:
-    """Return normalized profile probabilities used by the decoder/loss.
-
-    ``TopicSimple`` stores profiles directly as a trainable tensor.  This helper
-    makes the mode-inflated likelihood robust to small numerical drift by
-    clipping and renormalizing before probabilities are used in logs or TFP
-    distributions.
-    """
-    profiles = tf.cast(self.profiles, tf.float32)
-    profiles = tf.clip_by_value(profiles, self.eps, 1.0)
-    return profiles / tf.reduce_sum(profiles, axis=-1, keepdims=True)
-
   def _mode_one_hot(self, profiles: tf.Tensor) -> tf.Tensor:
     """Return one-hot mode category per cluster and position."""
     mode_indices = tf.argmax(profiles, axis=-1)
@@ -115,7 +103,7 @@ class TopicSimpleModeInflated(TopicSimple):
     """
     observations = tf.cast(observations, tf.float32)
     counts = tf.cast(counts, tf.float32)
-    profiles = self._profile_probs()
+    profiles = self.get_profiles()
 
     # Ordinary topic likelihood, summed over sequence positions.
     dist = tfp.distributions.Multinomial(
@@ -197,7 +185,7 @@ class TopicSimpleModeInflated(TopicSimple):
       sampled = tf.squeeze(tf.random.categorical(logits, num_samples=1), axis=-1)
       assignment = tf.one_hot(sampled, depth=self.dim_latent, dtype=tf.float32)
 
-    profiles = self._profile_probs()
+    profiles = self.get_profiles()
     selected_profiles = tf.reduce_sum(
         tf.expand_dims(profiles, axis=0) * assignment[:, :, None, None],
         axis=1,
