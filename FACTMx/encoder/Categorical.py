@@ -126,10 +126,20 @@ class Categorical(FACTMx_encoder):
     encoder = self.make_encoder(data)
     sample = encoder.sample()
     sample, _ = self.encode_params(data)
+
+    #rewrite
+    soft = sample
+    hard = tf.one_hot(tf.argmax(soft, axis=-1), depth=tf.shape(soft)[-1])
+    latent_for_heads = tf.stop_gradient(hard - soft) + soft
+
     loss = tf.reduce_mean(encoder.kl_divergence(self.prior))
+    
+    usage = tf.reduce_mean(sample, axis=0)
+    usage_entropy = -tf.reduce_sum(usage * tf.math.log(usage + eps))
+    loss -= tf.math.log(usage_entropy + 1E-300) #avoid very low clone usage entropy
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
-    return sample, loss
+    return latent_for_heads, loss
 
   def loss(self, data: TensorLike) -> tf.Tensor:
     """Return the KL divergence loss without sampling a latent value."""
