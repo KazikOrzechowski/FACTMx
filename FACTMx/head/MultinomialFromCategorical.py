@@ -95,7 +95,7 @@ class MultinomialFromCategorical(FACTMx_head):
     """Return negative log-likelihood loss for Multinomial observations."""
     observations, counts = data
     log_prob = self.make_decoder(skip_connection, counts).log_prob(observations)
-    loss = -tf.reduce_sum(log_prob) / tf.shape(observations)[0]
+    loss = -tf.reduce_sum(log_prob) / tf.cast(tf.shape(observations)[0], tf.float32)
     loss += tf.reduce_sum(self.layers['logits'].losses)
     return loss
 
