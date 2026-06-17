@@ -70,7 +70,7 @@ class TopicSimple(FACTMx_head):
     layer_configs = dict(layer_configs or {})
 
     if log_profiles is None:
-      log_profiles = tfp.distibutions.Dirichlet([.1]*self.dim_cat).sample((self.dim_latent, self.dim_pos))
+      log_profiles = tfp.distributions.Dirichlet([.1]*self.dim_cat).sample((self.dim_latent, self.dim_pos))
       log_profiles = tf.math.log(log_profiles + self.eps)
     log_profiles = tf.cast(log_profiles, tf.float32)
     self.log_profiles = tf.Variable(
