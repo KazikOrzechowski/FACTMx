@@ -21,7 +21,7 @@ __all__ = [
     'FACTMx_head',
     'Bernoulli',
     'Multinomial',
-    'MultinomialFromCategorical,
+    'MultinomialFromCategorical',
     'MultiNormal',
     'Mixture',
     'Topic',
