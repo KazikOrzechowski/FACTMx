@@ -135,7 +135,7 @@ class Categorical(FACTMx_encoder):
     loss = tf.reduce_mean(encoder.kl_divergence(self.prior))
     
     usage = tf.reduce_mean(sample, axis=0)
-    usage_entropy = -tf.reduce_sum(usage * tf.math.log(usage + eps))
+    usage_entropy = -tf.reduce_sum(usage * tf.math.log(usage + self.eps))
     loss -= tf.math.log(usage_entropy + 1E-300) #avoid very low clone usage entropy
     for layer in self.layers.values():
       loss += tf.reduce_sum(layer.losses)
