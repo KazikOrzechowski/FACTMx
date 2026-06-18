@@ -8,6 +8,7 @@ from FACTMx.head.FACTMx_head import FACTMx_head
 from FACTMx.head.Bernoulli import Bernoulli
 from FACTMx.head.Multinomial import Multinomial
 from FACTMx.head.MultinomialFromCategorical import MultinomialFromCategorical
+from FACTMx.head.MultinomialFromCategoricalPrior import MultinomialFromCategoricalPrior
 from FACTMx.head.MultiNormal import MultiNormal
 from FACTMx.head.Mixture import Mixture
 from FACTMx.head.Topic import Topic
@@ -22,6 +23,7 @@ __all__ = [
     'Bernoulli',
     'Multinomial',
     'MultinomialFromCategorical',
+    'MultinomialFromCategoricalPrior',
     'MultiNormal',
     'Mixture',
     'Topic',
