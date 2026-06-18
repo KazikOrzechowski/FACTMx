@@ -134,7 +134,7 @@ class MultinomialFromCategoricalPrior(FACTMx_head):
     observations, counts = data
     log_prob = self.make_decoder(skip_connection, counts).log_prob(observations)
 
-    loss = -tf.reduce_sum(log_prob) / tf.shape(observations)[0]
+    loss = -tf.reduce_sum(log_prob) / observations.shape[0]
     loss += tf.reduce_sum(self.layers['logits'].losses)
     loss += tf.reduce_sum(self.layers['preencoder'].losses)
     loss += tf.reduce_sum(self.layers['preencoder_scale'].losses)
