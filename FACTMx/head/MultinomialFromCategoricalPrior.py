@@ -71,7 +71,7 @@ class MultinomialFromCategoricalPrior(FACTMx_head):
     assert self.layers['preencoder_scale'].input_shape == (None, _dim_logits)
 
     if prior_locs is None:
-      prior_locs = tf.keras.initializers.Orthogonal(np.sqrt(self.dim))((self.dim_latent, self.dim))
+      prior_locs = tf.keras.initializers.Orthogonal(self.dim ** .5)((self.dim_latent, self.dim))
     self.prior_locs = tf.constant(prior_locs, dtype='float32')
 
     if prior_scales is None:
