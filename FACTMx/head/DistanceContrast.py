@@ -43,8 +43,8 @@ class DistanceContrast(FACTMx_head):
       return tf.norm(data[:, None, :] - data[None, :, :], axis=-1)
     if self.distance_metric == 'cosine':
       dot_product = tf.reduce_sum(data[:, None, :] * data[None, :, :], axis=-1)
-      norms = tf.norm(data, axis=-1) ** 2 + self.eps
-      return 1 - dot_product / norms[None, :]
+      norms = tf.norm(data, axis=-1)
+      return 1 - dot_product / (norms[None, :] * norms[:, None] + self.eps)
     if self.distance_metric == 'hamming':
       return tf.reduce_sum(tf.abs(data[:, None, :] - data[None, :, :]), axis=-1)
     raise ValueError(f'Unknown distance metric: {self.distance_metric}')
@@ -75,7 +75,7 @@ class DistanceContrast(FACTMx_head):
     config = super().get_config()
     config.update({
         'head_type': self.head_type,
-        'distane_metric': self.distance_metric,
+        'distance_metric': self.distance_metric,
         'pos_cutoff': self.pos_cutoff,
         'neg_cutoff': self.neg_cutoff,
     })
