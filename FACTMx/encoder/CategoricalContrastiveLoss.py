@@ -88,6 +88,7 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
 
   def encode_with_loss(self, data: TensorLike, encoder_kwargs) -> tuple[tf.Tensor, tf.Tensor]:
     """Return a latent sample together with the mean KL-to-prior loss."""
+    n_batch = tf.shape(data)[0]
     encoder = self.make_encoder(data)
     sample = self.encode_params(data)
 
