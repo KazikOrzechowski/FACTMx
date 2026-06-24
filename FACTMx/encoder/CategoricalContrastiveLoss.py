@@ -77,14 +77,14 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
       return mean
     return self.make_encoder(data).sample()
 
-  def trim_pairs(self, pairs: TensorLike, n_init: int) -> tf.Tensor:
+  def trim_pairs(self, pairs: TensorLike) -> tf.Tensor:
     if self.max_pairs is None:
-      return pairs, n_init
+      return pairs
     inds = []
     for i in tf.unique(pairs[:,0])[0]:
       inds.extend(tf.where(pairs[:,0] == i)[-self.max_pairs:])
     inds = tf.stack(inds)
-    return tf.gather(pairs, inds, axis=0), tf.shape(inds)
+    return tf.gather(pairs, inds, axis=0)
 
   def encode_with_loss(self, data: TensorLike, encoder_kwargs) -> tuple[tf.Tensor, tf.Tensor]:
     """Return a latent sample together with the mean KL-to-prior loss."""
@@ -126,7 +126,7 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
       negative_ids = tf.where(pair_matrix)
       n_neg = tf.shape(negative_ids)[0]
       if n_neg > 0:
-        negative_ids, n_neg = self.trim_pairs(negative_ids, n_neg)
+        negative_ids = self.trim_pairs(negative_ids)
         left = tf.gather(sample, negative_ids[:,0], axis=0)
         right = tf.gather(sample, negative_ids[:,1], axis=0)
         mid = (left + right) / 2
