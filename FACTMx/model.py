@@ -91,7 +91,10 @@ class FACTMx_model(tf.Module):
     head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
     head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs if 'encoder_input' in head_pass]
 
-    loc, _ = self.encoder.encode_params(tf.concat(head_encoded, axis=1))
+    if isinstance(self.encoder, [CategoricalContrastiveLoss]):
+      loc =  self.encoder.encode_params(tf.concat(head_encoded, axis=1))
+    else:
+      loc, _ = self.encoder.encode_params(tf.concat(head_encoded, axis=1))
     return loc
 
   def decode(self, latent: TensorLike, data: HeadData) -> list[Any]:
