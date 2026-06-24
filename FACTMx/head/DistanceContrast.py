@@ -2,12 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Optional
 
-import numpy as np
 import tensorflow as tf
-import tensorflow_probability as tfp
 
-from FACTMx.custom_keras_layers import ConstantResponse
-from FACTMx.head.FACTMx_head import Distribution, FACTMx_head, LayerConfigMap, TensorLike
+from FACTMx.head.FACTMx_head import FACTMx_head, TensorLike
 
 
 class DistanceContrast(FACTMx_head):
