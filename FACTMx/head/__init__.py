@@ -6,6 +6,7 @@ Importing this subpackage registers all bundled head subclasses so
 
 from FACTMx.head.FACTMx_head import FACTMx_head
 from FACTMx.head.Bernoulli import Bernoulli
+from FACTMx.head.DistanceContrast import DistanceContrast
 from FACTMx.head.Multinomial import Multinomial
 from FACTMx.head.MultinomialFromCategorical import MultinomialFromCategorical
 from FACTMx.head.MultinomialFromCategoricalPrior import MultinomialFromCategoricalPrior
@@ -21,6 +22,7 @@ from FACTMx.head.TopicSimpleModeInflated import TopicSimpleModeInflated, TopicMo
 __all__ = [
     'FACTMx_head',
     'Bernoulli',
+    'DistanceContrast',
     'Multinomial',
     'MultinomialFromCategorical',
     'MultinomialFromCategoricalPrior',
