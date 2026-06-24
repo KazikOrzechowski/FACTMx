@@ -107,7 +107,7 @@ class FACTMx_model(tf.Module):
     """Return the evidence lower bound objective for a batch of data."""
     head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
     head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs if 'encoder_input' in head_pass]
-    encoder_kwargs = [head_pass.pop('encoder_kwargs', None) for head_pass in head_kwargs]
+    encoder_kwargs = {k: v for head_pass in head_kwargs for k, v in head_pass.pop('encoder_kwargs', dict()).items()}
 
     latent, kl_loss = self.encoder.encode_with_loss(tf.concat(head_encoded, axis=-1), encoder_kwargs)
 
