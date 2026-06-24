@@ -43,7 +43,7 @@ class DistanceContrast(FACTMx_head):
       norms = tf.norm(data, axis=-1)
       return 1 - dot_product / (norms[None, :] * norms[:, None] + self.eps)
     if self.distance_metric == 'hamming':
-      print('editted')
+      print('editted2')
       seq = tf.argmax(data, axis=-1, output_type=tf.int32)
       mismatch = tf.not_equal(seq[:, None, :], seq[None, :, :])
       return tf.reduce_sum(tf.cast(mismatch, tf.float32), axis=-1)
