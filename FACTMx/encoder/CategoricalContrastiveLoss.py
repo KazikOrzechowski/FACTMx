@@ -24,12 +24,14 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
       eps: float = 1E-5,
       pos_pair_scale: float = .01,
       neg_pair_scale: float = .01,
+      max_pairs: Optional[int] = None,
       margin: float = .2,
   ) -> None:
     super().__init__(dim_latent, head_dims, name)
     self.eps = float(eps)
     self.pos_pair_scale = pos_pair_scale
     self.neg_pair_scale = neg_pair_scale
+    self.max_pairs = max_pairs
     self.margin = margin
     self.layers: dict[str, keras.Model] = {}
     layer_configs = dict(layer_configs or {})
@@ -91,6 +93,13 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
       return mean
     return self.make_encoder(data).sample()
 
+  def trim_pairs(self, pairs: TensorLike) -> tf.Tensor:
+    inds = []
+    for i in tf.unique(pairs[:,0]):
+      inds.extend(tf.where(pairs[:,0] == i)[-self.max_pairs:])
+    inds = tf.stack(inds)
+    return tf.gather(pairs, inds, axis=0)
+
   def encode_with_loss(self, data: TensorLike, encoder_kwargs) -> tuple[tf.Tensor, tf.Tensor]:
     """Return a latent sample together with the mean KL-to-prior loss."""
     n_batch, _ = data.shape
@@ -115,6 +124,8 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
       positive_ids = tf.where(pair_matrix)
       n_pos = positive_ids.shape[0]
       if n_pos > 0:
+        if self.max_pairs is not None:
+          positive_ids = self.trim_pairs(positive_ids)
         left = tf.gather(sample, positive_ids[:,0], axis=0)
         right = tf.gather(sample, positive_ids[:,1], axis=0)
         symm_kl = tf.reduce_sum((left - right) * (tf.math.log(left) - tf.math.log(right)))
@@ -124,6 +135,8 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
       negative_ids = tf.where(pair_matrix)
       n_neg = negative_ids.shape[0]
       if n_neg > 0:
+        if self.max_pairs is not None:
+          negative_ids = self.trim_pairs(negative_ids)
         left = tf.gather(sample, negative_ids[:,0], axis=0)
         right = tf.gather(sample, negative_ids[:,1], axis=0)
         mid = (left + right) / 2
@@ -156,6 +169,7 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
             'concentration': self.prior.concentration.numpy().tolist(),
         },
         'layer_configs': {key: layer.get_config() for key, layer in self.layers.items()},
+        'max_pairs': self.max_pairs,
         'pos_pair_scale': self.pos_pair_scale,
         'neg_pair_scale': self.neg_pair_scale,
         'margin': self.margin,
