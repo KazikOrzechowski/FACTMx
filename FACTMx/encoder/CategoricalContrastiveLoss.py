@@ -109,7 +109,7 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
 
     #contrastive loss
     if 'positive_pairs' in encoder_kwargs:
-      pair_matrix = tf.linalg.set_diag(encoder_kwargs['positive_pairs'], tf.zeros((n_batch,)))
+      pair_matrix = tf.linalg.set_diag(encoder_kwargs['positive_pairs'], tf.zeros((n_batch,), dtype=tf.bool))
       positive_ids = tf.where(pair_matrix)
       n_pos = tf.shape(positive_ids)[0]
       if n_pos > 0:
@@ -122,7 +122,7 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
         )
         loss += self.pos_pair_scale * tf.reduce_mean(symm_kl)
     if 'negative_pairs' in encoder_kwargs:
-      pair_matrix = tf.linalg.set_diag(encoder_kwargs['negative_pairs'], tf.zeros((n_batch,)))
+      pair_matrix = tf.linalg.set_diag(encoder_kwargs['negative_pairs'], tf.zeros((n_batch,), dtype=tf.bool))
       negative_ids = tf.where(pair_matrix)
       n_neg = tf.shape(negative_ids)[0]
       if n_neg > 0:
