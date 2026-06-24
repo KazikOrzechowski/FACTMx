@@ -100,7 +100,7 @@ class MultinomialFromCategorical(FACTMx_head):
     return loss
 
   def get_config(self) -> dict[str, Any]:
-    """Return a JSON-serializable Multinomial head configuration."""
+    """Return a JSON-serializable MultinomialFromCategorical head configuration."""
     return {
         'head_type': self.head_type,
         'dim_pos': self.dim_pos,
@@ -114,7 +114,7 @@ class MultinomialFromCategorical(FACTMx_head):
     }
 
   @staticmethod
-  def from_config(config: Mapping[str, Any]) -> 'Multinomial':
+  def from_config(config: Mapping[str, Any]) -> 'MultinomialFromCategorical':
     config.pop('head_type', None)
     config.pop('dim_preencoded', None)
     """Create a MultinomialFromCategorical head from ``config``."""
