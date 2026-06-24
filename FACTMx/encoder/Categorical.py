@@ -121,7 +121,7 @@ class Categorical(FACTMx_encoder):
       return mean
     return self.make_encoder(data).sample()
 
-  def encode_with_loss(self, data: TensorLike) -> tuple[tf.Tensor, tf.Tensor]:
+  def encode_with_loss(self, data: TensorLike, encoder_kwargs=None) -> tuple[tf.Tensor, tf.Tensor]:
     """Return a latent sample together with the mean KL-to-prior loss."""
     encoder = self.make_encoder(data)
     sample = encoder.sample()
@@ -141,7 +141,7 @@ class Categorical(FACTMx_encoder):
       loss += tf.reduce_sum(layer.losses)
     return latent_for_heads, loss
 
-  def loss(self, data: TensorLike) -> tf.Tensor:
+  def loss(self, data: TensorLike, encoder_kwargs=None) -> tf.Tensor:
     """Return the KL divergence loss without sampling a latent value."""
     encoder = self.make_encoder(data)
     loss = tf.reduce_mean(encoder.kl_divergence(self.prior))
