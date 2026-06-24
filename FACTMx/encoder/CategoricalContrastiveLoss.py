@@ -84,7 +84,7 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
     for i in tf.unique(pairs[:,0])[0]:
       # print(tf.where(pairs[:,0] == i)[-self.max_pairs:])
       inds.extend(tf.where(pairs[:,0] == i)[-self.max_pairs:])
-    inds = tf.concat(inds)
+    inds = tf.concat(inds, axis=0)
     return tf.gather(pairs, inds, axis=0)
 
   def encode_with_loss(self, data: TensorLike, encoder_kwargs) -> tuple[tf.Tensor, tf.Tensor]:
