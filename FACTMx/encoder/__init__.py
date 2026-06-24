@@ -5,6 +5,7 @@ from FACTMx.encoder.Linear import Linear
 from FACTMx.encoder.Attention import Attention
 from FACTMx.encoder.Mean import Mean
 from FACTMx.encoder.Categorical import Categorical
+from FACTMx.encoder.CategoricalContrastiveLoss import CategoricalContrastiveLoss
 
 __all__ = [
     'FACTMx_encoder',
@@ -12,4 +13,5 @@ __all__ = [
     'Attention',
     'Mean',
     'Categorical',
+    'CategoricalContrastiveLoss'
 ]
