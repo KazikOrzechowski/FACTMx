@@ -83,13 +83,13 @@ class FACTMx_model(tf.Module):
   def encode(self, data: HeadData) -> Tuple[tf.Tensor, list[dict[str, Any]]]:
     """Encode each head's data and return latent samples plus head kwargs."""
     head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
-    head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
+    head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs if 'encoder_input' in head_pass]
     return self.encoder.encode(tf.concat(head_encoded, axis=1)), head_kwargs
 
   def get_latent_representation(self, data: HeadData) -> tf.Tensor:
     """Return deterministic posterior means for ``data``."""
     head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
-    head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
+    head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs if 'encoder_input' in head_pass]
 
     loc, _ = self.encoder.encode_params(tf.concat(head_encoded, axis=1))
     return loc
@@ -106,9 +106,10 @@ class FACTMx_model(tf.Module):
   def elbo(self, data: HeadData) -> tf.Tensor:
     """Return the evidence lower bound objective for a batch of data."""
     head_kwargs = [head.encode(data[i]) for i, head in enumerate(self.heads)]
-    head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs]
+    head_encoded = [head_pass.pop('encoder_input') for head_pass in head_kwargs if 'encoder_input' in head_pass]
+    encoder_kwargs = [head_pass.pop('encoder_kwargs', None) for head_pass in head_kwargs]
 
-    latent, kl_loss = self.encoder.encode_with_loss(tf.concat(head_encoded, axis=-1))
+    latent, kl_loss = self.encoder.encode_with_loss(tf.concat(head_encoded, axis=-1), encoder_kwargs)
 
     decoding_losses = [
         head.loss(data[i], latent, beta=self.beta, **head_kwargs[i])
