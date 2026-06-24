@@ -81,7 +81,9 @@ class CategoricalContrastiveLoss(FACTMx_encoder):
     if self.max_pairs is None:
       return pairs
     inds = []
+    print(tf.unique(pairs[:,0])[0])
     for i in tf.unique(pairs[:,0])[0]:
+      print(i)
       inds.extend(tf.where(pairs[:,0] == i)[-self.max_pairs:])
     inds = tf.stack(inds)
     return tf.gather(pairs, inds, axis=0)
