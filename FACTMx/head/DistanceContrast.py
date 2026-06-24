@@ -45,7 +45,7 @@ class DistanceContrast(FACTMx_head):
     if self.distance_metric == 'hamming':
       seq = tf.argmax(data, axis=-1, output_type=tf.int32)
       mismatch = tf.not_equal(seq[:, None, :], seq[None, :, :])
-      return tf.reduce_sum(tf.cast(mismatch, tf.float32), axis=-1)
+      return tf.reduce_sum(tf.cast(mismatch, tf.float32), axis=-1) / 2.
     raise ValueError(f'Unknown distance metric: {self.distance_metric}')
 
   def encode(self, data: TensorLike) -> dict[str, tf.Tensor]:
