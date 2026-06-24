@@ -57,9 +57,9 @@ class DistanceContrast(FACTMx_head):
     encoder_kwargs = {}
     distances = self.get_distances(data)
     if self.pos_cutoff is not None:
-      encoder_kwargs['positive_pairs'] = tf.where(distances < self.pos_cutoff)
+      encoder_kwargs['positive_pairs'] = distances < self.pos_cutoff
     if self.neg_cutoff is not None:
-      encoder_kwargs['negative_pairs'] = tf.where(distances > self.neg_cutoff)
+      encoder_kwargs['negative_pairs'] = distances > self.neg_cutoff
     return {'encoder_kwargs': encoder_kwargs}
 
   def decode(self, latent: TensorLike, data: TensorLike) -> tf.Tensor:
