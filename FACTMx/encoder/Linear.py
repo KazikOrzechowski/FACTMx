@@ -81,7 +81,7 @@ class Linear(FACTMx_encoder):
       return loc
     return self.make_encoder(data).sample()
 
-  def encode_with_loss(self, data: TensorLike) -> tuple[tf.Tensor, tf.Tensor]:
+  def encode_with_loss(self, data: TensorLike, encoder_kwargs=None) -> tuple[tf.Tensor, tf.Tensor]:
     """Encode ``data`` and return the sampled latent tensor and KL loss."""
     encoder = self.make_encoder(data)
     sample = encoder.sample()
@@ -90,7 +90,7 @@ class Linear(FACTMx_encoder):
       loss += tf.reduce_sum(layer.losses)
     return sample, loss
 
-  def loss(self, data: TensorLike) -> tf.Tensor:
+  def loss(self, data: TensorLike, encoder_kwargs=None) -> tf.Tensor:
     """Return KL divergence loss between posteriors and the prior."""
     encoder = self.make_encoder(data)
     loss = tf.reduce_mean(encoder.kl_divergence(self.prior))
